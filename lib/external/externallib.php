@@ -503,6 +503,17 @@ class core_external extends external_api {
     }
 
     /**
+     * Get list of exceptions thar are considered to be non-failures.
+     *
+     * @return array
+     */
+    public static function update_inplace_editable_normal_exceptions(): array {
+        // Unfortunately there is no way to return information about problems
+        // that block the update from plugins - such as duplicate tag names.
+        return [moodle_exception::class];
+    }
+
+    /**
      * Returns description of fetch_notifications() parameters.
      *
      * @return external_function_parameters

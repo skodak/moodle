@@ -509,7 +509,10 @@ class behat_util extends testing_util {
      * @return string The site info
      */
     public static function get_site_info() {
+        global $CFG;
         $siteinfo = parent::get_site_info();
+        $siteinfo .= 'error_log: ' . $CFG->dataroot . DIRECTORY_SEPARATOR
+            . 'behat' . DIRECTORY_SEPARATOR . 'error.log' . PHP_EOL;
 
         $accessibility = empty(behat_config_manager::get_behat_run_config_value('axe')) ? 'No' : 'Yes';
 

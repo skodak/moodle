@@ -625,7 +625,8 @@ class manager {
         $pluginsfound = false;
 
         try {
-            $xml = simplexml_load_string($xmlcontent);
+            // Silence PHP warnings here in case the xml structure is invalid.
+            $xml = @simplexml_load_string($xmlcontent);
         } catch (\Exception $exception) {
             $xml = false;
         }

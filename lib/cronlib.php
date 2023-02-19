@@ -284,6 +284,14 @@ function cron_run_inner_scheduled_task(\core\task\task_base $task) {
             mtrace("Backtrace:");
             mtrace(format_backtrace($e->getTrace(), true));
         }
+        if (debugging('', DEBUG_MINIMAL)) {
+            $errorlog = 'Scheduled task failed: ' . $fullname . ', ' . $e->getMessage() . PHP_EOL;
+            if (!empty($e->debuginfo)) {
+                $errorlog .= "Debug info: $e->debuginfo" . PHP_EOL;
+            }
+            $errorlog .= format_backtrace($e->getTrace(), true);
+            error_log($errorlog);
+        }
         \core\task\manager::scheduled_task_failed($task);
     } finally {
         // Reset debugging if it changed.
@@ -383,6 +391,14 @@ function cron_run_inner_adhoc_task(\core\task\adhoc_task $task) {
             }
             mtrace("Backtrace:");
             mtrace(format_backtrace($e->getTrace(), true));
+        }
+        if (debugging('', DEBUG_MINIMAL)) {
+            $errorlog = 'Adhoc task failed: ' . get_class($task) . ', ' . $e->getMessage() . PHP_EOL;
+            if (!empty($e->debuginfo)) {
+                $errorlog .= "Debug info: $e->debuginfo" . PHP_EOL;
+            }
+            $errorlog .= format_backtrace($e->getTrace(), true);
+            error_log($errorlog);
         }
         \core\task\manager::adhoc_task_failed($task);
     } finally {

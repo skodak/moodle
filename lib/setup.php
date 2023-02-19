@@ -585,11 +585,11 @@ if (!PHPUNIT_TEST or PHPUNIT_UTIL) {
     set_error_handler('default_error_handler', E_ALL | E_STRICT);
 }
 
-// Acceptance tests needs special output to capture the errors,
+// Acceptance tests send errors to dedicated error log file,
 // but not necessary for behat CLI command and init script.
 if (defined('BEHAT_SITE_RUNNING') && !defined('BEHAT_TEST') && !defined('BEHAT_UTIL')) {
-    require_once(__DIR__ . '/behat/lib.php');
-    set_error_handler('behat_error_handler', E_ALL | E_STRICT);
+    ini_set('error_log', "$CFG->dataroot/behat/error.log");
+    ini_set('log_errors', '1');
 }
 
 if (defined('WS_SERVER') && WS_SERVER) {
@@ -1108,12 +1108,6 @@ if (isset($CFG->maintenance_later) and $CFG->maintenance_later <= time()) {
     } else if (!CLI_SCRIPT) {
         redirect(new moodle_url('/'));
     }
-}
-
-// Add behat_shutdown_function to shutdown manager, so we can capture php errors,
-// but not necessary for behat CLI command as it's being captured by behat process.
-if (defined('BEHAT_SITE_RUNNING') && !defined('BEHAT_TEST')) {
-    core_shutdown_manager::register_function('behat_shutdown_function');
 }
 
 // note: we can not block non utf-8 installations here, because empty mysql database

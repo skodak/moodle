@@ -204,6 +204,9 @@ EOF;
                 declare(ticks = 1);
             }
         }
+
+        // Redirect logging to dedicated PHP error log file.
+        behat_error_log::init_error_log();
     }
 
     /**
@@ -511,7 +514,10 @@ EOF;
             // Again, this would be better in the BeforeSuite hook, but that does not have access to the selectors in
             // order to perform the necessary searches.
             $session = $this->getSession();
-            $this->execute('behat_general::i_visit', ['/']);
+            $session->visit("$CFG->wwwroot/");
+            $this->wait_for_pending_js();
+            // Ignore random caching problems on first visit and errors from end of previous scenario.
+            behat_error_log::get_log_error();
 
             // Checking that the root path is a Moodle test site.
             if (self::is_first_scenario()) {

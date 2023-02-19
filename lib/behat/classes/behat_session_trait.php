@@ -28,7 +28,6 @@ use Behat\Mink\Element\Element;
 use Behat\Mink\Exception\DriverException;
 use Behat\Mink\Exception\ExpectationException;
 use Behat\Mink\Exception\ElementNotFoundException;
-use Behat\Mink\Exception\NoSuchWindowException;
 use Behat\Mink\Session;
 use Behat\Testwork\Hook\Scope\HookScope;
 use Facebook\WebDriver\Exception\ScriptTimeoutException;
@@ -364,6 +363,10 @@ trait behat_session_trait {
         $end = $start + $timeout;
 
         do {
+            $error = behat_error_log::get_log_error();
+            if ($error !== null) {
+                throw new Exception($error);
+            }
             // We catch the exception thrown by the step definition to execute it again.
             try {
                 // We don't check with !== because most of the time closures will return
@@ -856,10 +859,11 @@ EOF;
             return false;
         }
 
+        $timestart = time();
+
         // We don't use behat_base::spin() here as we don't want to end up with an exception
         // if the page & JSs don't finish loading properly.
-        for ($i = 0; $i < self::get_extended_timeout() * 10; $i++) {
-            $pending = '';
+        while (true) {
             try {
                 $jscode = trim(preg_replace('/\s+/', ' ', '
                     return (function() {
@@ -874,15 +878,18 @@ EOF;
                         return M.util.pending_js.join(":");
                     })()'));
                 $pending = self::evaluate_script_in_session($session, $jscode);
-            } catch (NoSuchWindowException $nsw) {
+            } catch (\Facebook\WebDriver\Exception\NoSuchWindowException $e) {
                 // We catch an exception here, in case we just closed the window we were interacting with.
                 // No javascript is running if there is no window right?
-                $pending = '';
-            } catch (UnknownError $e) {
-                // M is not defined when the window or the frame don't exist anymore.
-                if (strstr($e->getMessage(), 'M is not defined') != false) {
-                    $pending = '';
-                }
+                return false;
+            } catch (\Facebook\WebDriver\Exception\NoSuchFrameException $e) {
+                // We catch an exception here, in case we just closed the window we were interacting with.
+                // No javascript is running if there is no window right?
+                return false;
+            } catch (\Facebook\WebDriver\Exception\ScriptTimeoutException $e) {
+                $pending = 'script_timeout';
+            } catch (Throwable $e) {
+                $pending = 'unknown_error: ' . get_class($e) . ' - ' . $e->getMessage();
             }
 
             // If there are no pending JS we stop waiting.
@@ -890,8 +897,28 @@ EOF;
                 return true;
             }
 
+            if ($timestart + behat_base::get_extended_timeout() < time()) {
+                // Enough waiting, throw exception.
+                break;
+            }
+
             // 0.1 seconds.
             usleep(100000);
+        }
+
+        // Let devs know if there are any errors in console log.
+        $consolelogs = '';
+        try {
+            $logs = $session->getDriver()->getWebDriver()->manage()->getLog('browser');
+            if ($logs) {
+                $consolelogs = "\n";
+                foreach ($logs as $log) {
+                    $level = $log['level'];
+                    $message = str_replace("\n", ' ', $log['message']);
+                    $consolelogs .= "  console: $level - $message\n";
+                }
+            }
+        } catch (Throwable $e) {
         }
 
         // Timeout waiting for JS to complete. It will be caught and forwarded to behat_hooks::i_look_for_exceptions().
@@ -901,126 +928,20 @@ EOF;
         throw new \Exception('Javascript code and/or AJAX requests are not ready after ' .
                 self::get_extended_timeout() .
                 ' seconds. There is a Javascript error or the code is extremely slow (' . $pending .
-                '). If you are using a slow machine, consider setting $CFG->behat_increasetimeout.');
+                '). If you are using a slow machine, consider setting $CFG->behat_increasetimeout.' . $consolelogs);
     }
 
     /**
      * Internal step definition to find exceptions, debugging() messages and PHP debug messages.
      *
-     * Part of behat_hooks class as is part of the testing framework, is auto-executed
-     * after each step so no features will splicitly use it.
+     * NOTE: This was never executed automatically after every step.
      *
      * @throws Exception Unknown type, depending on what we caught in the hook or basic \Exception.
-     * @see Moodle\BehatExtension\Tester\MoodleStepTester
      */
     public function look_for_exceptions() {
-        // Wrap in try in case we were interacting with a closed window.
-        try {
-
-            // Exceptions.
-            $exceptionsxpath = "//div[@data-rel='fatalerror']";
-            // Debugging messages.
-            $debuggingxpath = "//div[@data-rel='debugging']";
-            // PHP debug messages.
-            $phperrorxpath = "//div[@data-rel='phpdebugmessage']";
-            // Any other backtrace.
-            $othersxpath = "(//*[contains(., ': call to ')])[1]";
-
-            $xpaths = array($exceptionsxpath, $debuggingxpath, $phperrorxpath, $othersxpath);
-            $joinedxpath = implode(' | ', $xpaths);
-
-            // Joined xpath expression. Most of the time there will be no exceptions, so this pre-check
-            // is faster than to send the 4 xpath queries for each step.
-            if (!$this->getSession()->getDriver()->find($joinedxpath)) {
-                // Check if we have recorded any errors in driver process.
-                $phperrors = behat_get_shutdown_process_errors();
-                if (!empty($phperrors)) {
-                    foreach ($phperrors as $error) {
-                        $errnostring = behat_get_error_string($error['type']);
-                        $msgs[] = $errnostring . ": " .$error['message'] . " at " . $error['file'] . ": " . $error['line'];
-                    }
-                    $msg = "PHP errors found:\n" . implode("\n", $msgs);
-                    throw new \Exception(htmlentities($msg, ENT_COMPAT));
-                }
-
-                return;
-            }
-
-            // Exceptions.
-            if ($errormsg = $this->getSession()->getPage()->find('xpath', $exceptionsxpath)) {
-
-                // Getting the debugging info and the backtrace.
-                $errorinfoboxes = $this->getSession()->getPage()->findAll('css', 'div.alert-error');
-                // If errorinfoboxes is empty, try find alert-danger (bootstrap4) class.
-                if (empty($errorinfoboxes)) {
-                    $errorinfoboxes = $this->getSession()->getPage()->findAll('css', 'div.alert-danger');
-                }
-                // If errorinfoboxes is empty, try find notifytiny (original) class.
-                if (empty($errorinfoboxes)) {
-                    $errorinfoboxes = $this->getSession()->getPage()->findAll('css', 'div.notifytiny');
-                }
-
-                // If errorinfoboxes is empty, try find ajax/JS exception in dialogue.
-                if (empty($errorinfoboxes)) {
-                    $errorinfoboxes = $this->getSession()->getPage()->findAll('css', 'div.moodle-exception-message');
-
-                    // If ajax/JS exception.
-                    if ($errorinfoboxes) {
-                        $errorinfo = $this->get_debug_text($errorinfoboxes[0]->getHtml());
-                    }
-
-                } else {
-                    $errorinfo = implode("\n", [
-                        $this->get_debug_text($errorinfoboxes[0]->getHtml()),
-                        $this->get_debug_text($errorinfoboxes[1]->getHtml()),
-                        html_to_text($errorinfoboxes[2]->find('css', 'ul')->getHtml()),
-                    ]);
-                }
-
-                $msg = "Moodle exception: " . $errormsg->getText() . "\n" . $errorinfo;
-                throw new \Exception(html_entity_decode($msg, ENT_COMPAT));
-            }
-
-            // Debugging messages.
-            if ($debuggingmessages = $this->getSession()->getPage()->findAll('xpath', $debuggingxpath)) {
-                $msgs = array();
-                foreach ($debuggingmessages as $debuggingmessage) {
-                    $msgs[] = $this->get_debug_text($debuggingmessage->getHtml());
-                }
-                $msg = "debugging() message/s found:\n" . implode("\n", $msgs);
-                throw new \Exception(html_entity_decode($msg, ENT_COMPAT));
-            }
-
-            // PHP debug messages.
-            if ($phpmessages = $this->getSession()->getPage()->findAll('xpath', $phperrorxpath)) {
-
-                $msgs = array();
-                foreach ($phpmessages as $phpmessage) {
-                    $msgs[] = $this->get_debug_text($phpmessage->getHtml());
-                }
-                $msg = "PHP debug message/s found:\n" . implode("\n", $msgs);
-                throw new \Exception(html_entity_decode($msg, ENT_COMPAT));
-            }
-
-            // Any other backtrace.
-            // First looking through xpath as it is faster than get and parse the whole page contents,
-            // we get the contents and look for matches once we found something to suspect that there is a backtrace.
-            if ($this->getSession()->getDriver()->find($othersxpath)) {
-                $backtracespattern = '/(line [0-9]* of [^:]*: call to [\->&;:a-zA-Z_\x7f-\xff][\->&;:a-zA-Z0-9_\x7f-\xff]*)/';
-                if (preg_match_all($backtracespattern, $this->getSession()->getPage()->getContent(), $backtraces)) {
-                    $msgs = array();
-                    foreach ($backtraces[0] as $backtrace) {
-                        $msgs[] = $backtrace . '()';
-                    }
-                    $msg = "Other backtraces found:\n" . implode("\n", $msgs);
-                    throw new \Exception(htmlentities($msg, ENT_COMPAT));
-                }
-            }
-
-        } catch (NoSuchWindowException $e) {
-            // If we were interacting with a popup window it will not exists after closing it.
-        } catch (DriverException $e) {
-            // Same reason as above.
+        $error = behat_error_log::get_log_error();
+        if ($error !== null) {
+            throw new Exception($error);
         }
     }
 

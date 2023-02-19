@@ -1594,6 +1594,16 @@ class core_message_external extends external_api {
     }
 
     /**
+     * Get list of exceptions thar are considered to be non-failures.
+     *
+     * @return array
+     */
+    public static function get_conversation_between_users_normal_exceptions(): array {
+        // Do not log the returned exception as failure until nullable external_single_structure is allowed.
+        return [moodle_exception::class];
+    }
+
+    /**
      * Get self-conversation parameters.
      *
      * @return external_function_parameters

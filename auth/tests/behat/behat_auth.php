@@ -47,21 +47,34 @@ class behat_auth extends behat_base {
      * @param moodle_url|null $wantsurl optional, URL to go to after logging in.
      */
     public function i_log_in_as(string $username, moodle_url $wantsurl = null) {
+        global $CFG;
+
         // In the mobile app the required tasks are different (does not support $wantsurl).
         if ($this->is_in_app()) {
             $this->execute('behat_app::login', [$username]);
             return;
         }
 
+        $session = $this->getSession();
+
+        if ($this->running_javascript()) {
+            // We need to make sure that there are no pending WS requests that could fail.
+            $session->visit("$CFG->wwwroot/auth/tests/behat/wait.php");
+            $this->wait_for_pending_js();
+        }
+
         $loginurl = new moodle_url('/auth/tests/behat/login.php', [
             'username' => $username,
         ]);
-        if ($wantsurl !== null) {
-            $loginurl->param('wantsurl', $wantsurl->out_as_local_url());
-        }
+        $session->visit($loginurl->out(false));
+        $this->wait_for_pending_js();
+        $this->look_for_exceptions();
 
-        // Visit login page.
-        $this->execute('behat_general::i_visit', [$loginurl]);
+        if ($wantsurl !== null) {
+            $session->visit($wantsurl->out(false));
+            $this->wait_for_pending_js();
+            $this->look_for_exceptions();
+        }
     }
 
     /**
@@ -71,6 +84,18 @@ class behat_auth extends behat_base {
      * @Given I am not logged in
      */
     public function i_log_out() {
-        $this->execute('behat_general::i_visit', [new moodle_url('/auth/tests/behat/logout.php')]);
+        global $CFG;
+
+        $session = $this->getSession();
+
+        if ($this->running_javascript()) {
+            // We need to make sure that there are no pending WS requests that could fail.
+            $session->visit("$CFG->wwwroot/auth/tests/behat/wait.php");
+            $this->wait_for_pending_js();
+        }
+
+        $session->visit("$CFG->wwwroot/auth/tests/behat/logout.php");
+        $this->wait_for_pending_js();
+        $this->look_for_exceptions();
     }
 }

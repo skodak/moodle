@@ -32,7 +32,9 @@ Feature: Configure tool types
     When I set the field "url" to local url "/mod/lti/tests/fixtures/nonexistant.xml"
     And I press "Add Legacy LTI"
     Then I should see "Enter your consumer key and shared secret"
+    And I start ignoring errors detected by behat
     And I press "Save changes"
+    And I stop ignoring errors detected by behat
     And I should see "Failed to create new tool. Please check the URL and try again."
 
   @javascript

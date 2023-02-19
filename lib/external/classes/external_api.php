@@ -162,6 +162,17 @@ class external_api {
             }
         }
 
+        // List of exceptions that are considered to be non-failures,
+        // this is necessary because some functions abuse exceptions to workaround missing
+        // support for optional NULL return value when external_single_structure used.
+        $function->normalexceptions = [];
+        if (method_exists($function->classname, $function->methodname . '_normal_exceptions')) {
+            $normalexceptions = call_user_func([$function->classname, $function->methodname . '_normal_exceptions']);
+            if (is_array($normalexceptions)) {
+                $function->normalexceptions = $normalexceptions;
+            }
+        }
+
         return $function;
     }
 
@@ -262,6 +273,17 @@ class external_api {
         } catch (\Throwable $e) {
             $exception = get_exception_info($e);
             unset($exception->a);
+            if (!PHPUNIT_TEST && debugging('', DEBUG_MINIMAL)) {
+                if (!in_array(get_class($e), $externalfunctioninfo->normalexceptions, true)) {
+                    $errorlog = "External method failed: {$externalfunctioninfo->classname}::{$externalfunctioninfo->methodname}()";
+                    $errorlog .= PHP_EOL . $e->getMessage();
+                    if (!empty($e->debuginfo)) {
+                        $errorlog .= PHP_EOL . 'Debug: ' . $e->debuginfo;
+                    }
+                    $errorlog .= PHP_EOL . format_backtrace($exception->backtrace, true);
+                    error_log($errorlog);
+                }
+            }
             $exception->backtrace = format_backtrace($exception->backtrace, true);
             if (!debugging('', DEBUG_DEVELOPER)) {
                 unset($exception->debuginfo);

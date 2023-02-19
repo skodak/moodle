@@ -3312,6 +3312,10 @@ function debugging($message = '', $level = DEBUG_NORMAL, $backtrace = null) {
                 echo '<div class="notifytiny debuggingmessage" data-rel="debugging">' , $message , $from , '</div>';
             }
 
+            // Log debugging messages so that admins and devs can find them easier,
+            // this is also required for behat error detection.
+            error_log('Debugging: ' . $message . ' in ' . PHP_EOL . $from);
+
         } else {
             trigger_error($message . $from, E_USER_NOTICE);
         }

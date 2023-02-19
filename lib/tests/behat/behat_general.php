@@ -513,6 +513,12 @@ class behat_general extends behat_base {
         }
 
         $node = $this->get_selected_node($selectortype, $element);
+        if ($node->isVisible()) {
+            return;
+        }
+        // Wait a moment in case there is a slow animation.
+        $this->wait_for_pending_js();
+        sleep(1);
         if (!$node->isVisible()) {
             throw new ExpectationException('"' . $element . '" "' . $selectortype . '" is not visible', $this->getSession());
         }
@@ -535,13 +541,20 @@ class behat_general extends behat_base {
      */
     public function should_not_be_visible($element, $selectortype) {
 
-        try {
-            $this->should_be_visible($element, $selectortype);
-        } catch (ExpectationException $e) {
-            // All as expected.
+        if (!$this->running_javascript()) {
+            throw new DriverException('Visible checks are disabled in scenarios without Javascript support');
+        }
+
+        $node = $this->get_selected_node($selectortype, $element);
+        if (!$node->isVisible()) {
             return;
         }
-        throw new ExpectationException('"' . $element . '" "' . $selectortype . '" is visible', $this->getSession());
+        // Wait a moment in case there is a slow animation that will hide the element.
+        $this->wait_for_pending_js();
+        sleep(1);
+        if ($node->isVisible()) {
+            throw new ExpectationException('"' . $element . '" "' . $selectortype . '" is visible', $this->getSession());
+        }
     }
 
     /**
@@ -628,27 +641,28 @@ class behat_general extends behat_base {
             return;
         }
 
-        // We spin as we don't have enough checking that the element is there, we
-        // should also ensure that the element is visible. Using microsleep as this
-        // is a repeated step and global performance is important.
-        $this->spin(
-            function($context, $args) {
+        foreach ($nodes as $node) {
+            if ($node->isVisible()) {
+                return;
+            }
+        }
 
-                foreach ($args['nodes'] as $node) {
-                    if ($node->isVisible()) {
-                        return true;
-                    }
-                }
+        // There might be some pending animation, so wait for a moment and retry.
+        $this->wait_for_pending_js();
+        sleep(1);
+        try {
+            $nodes = $this->find_all('xpath', $xpath);
+        } catch (ElementNotFoundException $e) {
+            throw new ExpectationException('"' . $text . '" text was not found in the page', $this->getSession());
+        }
+        foreach ($nodes as $node) {
+            if ($node->isVisible()) {
+                return;
+            }
+        }
 
-                // If non of the nodes is visible we loop again.
-                throw new ExpectationException('"' . $args['text'] . '" text was found but was not visible', $context->getSession());
-            },
-            array('nodes' => $nodes, 'text' => $text),
-            false,
-            false,
-            true
-        );
-
+        // If none of the nodes is visible this is the end.
+        throw new ExpectationException('"' . $text . '" text was found but was not visible', $this->getSession());
     }
 
     /**
