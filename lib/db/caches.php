@@ -81,14 +81,13 @@ $definitions = array(
 
     // Hook callbacks cache.
     // There is a static cache in hook manager, data is fetched once per page on first hook execution.
-    // This cache needs to be invalidated during upgrades when code changes and when callbacks
-    // overrides are updated.
+    // Any change in db/hooks.php files must be accompanied by a version bump in some version.php file,
+    // because we cannot rely on cache purging of local stores.
     'hookcallbacks' => array(
         'mode' => cache_store::MODE_APPLICATION,
         'simplekeys' => true,
         'simpledata' => true,
         'staticacceleration' => false,
-        // WARNING: Manual cache purge may be required when overriding hook callbacks.
         'canuselocalstore' => true,
     ),
 

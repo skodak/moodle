@@ -338,10 +338,12 @@ final class manager implements
             $callbacks = $cache->get('callbacks');
             $deprecations = $cache->get('deprecations');
             $overrideshash = $cache->get('overrideshash');
+            $allversionshash = $cache->get('allversionshash');
 
             $usecache = is_array($callbacks);
             $usecache = $usecache && is_array($deprecations);
             $usecache = $usecache && $this->calculate_overrides_hash() === $overrideshash;
+            $usecache = $usecache && !empty($CFG->allversionshash) && $allversionshash === $CFG->allversionshash;
             if ($usecache) {
                 $this->allcallbacks = $callbacks;
                 $this->alldeprecations = $deprecations;
@@ -367,10 +369,11 @@ final class manager implements
         // Load the callbacks and apply overrides.
         $this->load_callbacks($components);
 
-        if ($cache) {
+        if ($cache && !empty($CFG->allversionshash)) {
             $cache->set('callbacks', $this->allcallbacks);
             $cache->set('deprecations', $this->alldeprecations);
             $cache->set('overrideshash', $this->calculate_overrides_hash());
+            $cache->set('allversionshash', $CFG->allversionshash);
         }
     }
 
