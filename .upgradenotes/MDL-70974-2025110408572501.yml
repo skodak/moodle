@@ -1,0 +1,5 @@
+issueNumber: MDL-70974
+notes:
+  core:
+    - message: Added upsert_record method to moodle_database
+      type: improved

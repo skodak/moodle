@@ -1901,6 +1901,134 @@ abstract class moodle_database {
     abstract public function update_record($table, $dataobject, $bulk=false);
 
     /**
+     * Validate all upsert parameters.
+     *
+     * @param string $table
+     * @param stdClass $dataobject
+     * @param array $uniqueindexcolumns
+     * @param array $insertonlyfields
+     * @return void
+     */
+    protected function validate_upsert_record_arguments(
+        string $table,
+        stdClass $dataobject,
+        array $uniqueindexcolumns,
+        array $insertonlyfields
+    ): void {
+        if (!$uniqueindexcolumns) {
+            throw new \core\exception\coding_exception(
+                'moodle_database::upsert_record() requires list of unique constraint columns'
+            );
+        }
+
+        if (property_exists($dataobject, 'id')) {
+            throw new \core\exception\coding_exception(
+                'moodle_database::upsert_record() dataobject must not have id property'
+            );
+        }
+
+        foreach ($uniqueindexcolumns as $column) {
+            if (!isset($dataobject->$column)) {
+                throw new \core\exception\coding_exception(
+                    'moodle_database::upsert_record() dataobject must have all unique columns set'
+                );
+            }
+        }
+
+        $columns = $this->get_columns($table);
+
+        foreach ($insertonlyfields as $k => $v) {
+            if (!isset($columns[$k])) {
+                throw new \core\exception\coding_exception(
+                    'moodle_database::upsert_record() insertonlyfields contains unknown column'
+                );
+            }
+            if (in_array($k, $uniqueindexcolumns)) {
+                throw new \core\exception\coding_exception(
+                    'moodle_database::upsert_record() insertonlyfields cannot contain unique columns'
+                );
+            }
+            if (property_exists($dataobject, $k)) {
+                throw new \core\exception\coding_exception(
+                    'moodle_database::upsert_record() insertonlyfields must not share columns with dataobject'
+                );
+            }
+        }
+
+        $foundnonunique = false;
+        foreach ((array)$dataobject as $field => $value) {
+            if (!isset($columns[$field])) {
+                throw new \core\exception\coding_exception(
+                    'moodle_database::upsert_record() dataobject contains unknown column'
+                );
+            }
+            if (!$foundnonunique && !in_array($field, $uniqueindexcolumns)) {
+                $foundnonunique = true;
+            }
+        }
+
+        if (!$foundnonunique) {
+            throw new \core\exception\coding_exception(
+                'moodle_database::upsert_record() dataobject must contain at least one non-unique column'
+            );
+        }
+    }
+
+    /**
+     * A fast way to insert or update record that has EXACTLY ONE unique index.
+     *
+     * If there is already an existing record with unique constraint then
+     * record is updated, if not new record is inserted.
+     *
+     * This method solves problems with highly concurrent inserts into tables with unique constraints.
+     *
+     * @param string $table
+     * @param stdClass|array $dataobject
+     * @param string[] $uniqueindexcolumns list of all columns in unique index
+     * @param array $insertonlyfields additional fields with values to be used only for inserts
+     * @return int row id
+     */
+    public function upsert_record(string $table, $dataobject, array $uniqueindexcolumns, array $insertonlyfields = []): int {
+
+        // NOTE: this is a fallback implementation for databases that do not have native UPSERT.
+
+        $dataobject = (object)(array)$dataobject;
+
+        $this->validate_upsert_record_arguments($table, $dataobject, $uniqueindexcolumns, $insertonlyfields);
+
+        $conditions = [];
+        foreach ($uniqueindexcolumns as $column) {
+            $conditions[$column] = $dataobject->$column;
+        }
+
+        $record = $this->get_record($table, $conditions);
+        if ($record) {
+            $dataobject->id = $record->id;
+            $this->update_record($table, $dataobject);
+            $id = (int)$record->id;
+        } else {
+            try {
+                if ($insertonlyfields) {
+                    $insertdata = (object)((array)$dataobject + $insertonlyfields);
+                } else {
+                    $insertdata = $dataobject;
+                }
+                $id = $this->insert_record($table, $insertdata);
+            } catch (dml_write_exception $e) {
+                // Could be a concurrent insert trouble.
+                $record = $this->get_record($table, $conditions);
+                if (!$record) {
+                    throw $e;
+                }
+                $dataobject->id = $record->id;
+                $this->update_record($table, $dataobject);
+                $id = (int)$record->id;
+            }
+        }
+        return $id;
+    }
+
+    /**
      * Set a single field in every table record where all the given conditions met.
      *
      * @param string $table The database table to be checked against.

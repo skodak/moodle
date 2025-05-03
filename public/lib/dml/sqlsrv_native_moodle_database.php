@@ -1257,6 +1257,68 @@ class sqlsrv_native_moodle_database extends moodle_database {
     }
 
     /**
+     * A fast way to insert or update record that has EXACTLY ONE unique index.
+     *
+     * If there is already an existing record with unique constraint then
+     * record is updated, if not new record is inserted.
+     *
+     * @param string $table
+     * @param stdClass|array $dataobject
+     * @param string[] $uniqueindexcolumns list of all columns in unique index
+     * @param array $insertonlyfields additional fields with values to be used only for inserts
+     * @return int row id
+     */
+    public function upsert_record(string $table, $dataobject, array $uniqueindexcolumns, array $insertonlyfields = []): int {
+        $dataobject = (object)(array)$dataobject;
+
+        $this->validate_upsert_record_arguments($table, $dataobject, $uniqueindexcolumns, $insertonlyfields);
+
+        $columns = $this->get_columns($table);
+
+        $values = [];
+        $ons = [];
+        $updates = [];
+        $fields = [];
+        $sourcefields = [];
+        $params = [];
+        foreach ((array)$dataobject as $field => $value) {
+            $column = $columns[$field];
+            $value = $this->normalise_value($column, $value);
+            $params[] = $value;
+            $values[] = "?";
+            $fields[] = $field;
+            $sourcefields[] = "upsertsource.{$field}";
+            if (in_array($field, $uniqueindexcolumns)) {
+                $ons[] = "{$this->prefix}{$table}.{$field} = upsertsource.{$field}";
+            } else {
+                $updates[] = "{$field} = upsertsource.{$field}";
+            }
+        }
+        foreach ($insertonlyfields as $field => $value) {
+            $column = $columns[$field];
+            $value = $this->normalise_value($column, $value);
+            $params[] = $value;
+            $values[] = "?";
+            $fields[] = $field;
+            $sourcefields[] = "upsertsource.{$field}";
+        }
+        $values = implode(',', $values);
+        $ons = implode(' AND ', $ons);
+        $updates = implode(',', $updates);
+        $fields = implode(',', $fields);
+        $sourcefields = implode(',', $sourcefields);
+
+        $sql = "MERGE INTO {$this->prefix}$table
+                      USING (VALUES ($values)) AS upsertsource ($fields) ON $ons
+                        WHEN MATCHED THEN UPDATE SET $updates
+                        WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($sourcefields);";
+
+        $this->do_query($sql, $params, SQL_QUERY_UPDATE); // For now use update type.
+
+        return (int)$this->sqlsrv_fetch_id();
+    }
+
+    /**
      * Set a single field in every table record which match a particular WHERE clause.
      *
      * @param string $table The database table to be checked against.

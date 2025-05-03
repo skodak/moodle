@@ -1395,6 +1395,68 @@ class pgsql_native_moodle_database extends moodle_database {
     }
 
     /**
+     * A fast way to insert or update record that has EXACTLY ONE unique index.
+     *
+     * If there is already an existing record with unique constraint then
+     * record is updated, if not new record is inserted.
+     *
+     * This method solves problems with highly concurrent inserts into tables with unique constraints.
+     *
+     * @param string $table
+     * @param stdClass|array $dataobject
+     * @param string[] $uniqueindexcolumns list of all columns in unique index
+     * @param array $insertonlyfields additional fields with values to be used only for inserts
+     * @return int row id
+     */
+    public function upsert_record(string $table, $dataobject, array $uniqueindexcolumns, array $insertonlyfields = []): int {
+        $dataobject = (object)(array)$dataobject;
+
+        $this->validate_upsert_record_arguments($table, $dataobject, $uniqueindexcolumns, $insertonlyfields);
+
+        $columns = $this->get_columns($table);
+
+        $values = [];
+        $fields = [];
+        $params = [];
+        $updates = [];
+        $i = 1;
+        foreach ((array)$dataobject as $field => $value) {
+            $column = $columns[$field];
+            $value = $this->normalise_value($column, $value);
+            $values[] = "\$" . $i++;
+            $params[] = $value;
+            $fields[] = $field;
+            if (!in_array($field, $uniqueindexcolumns)) {
+                $updates[] = "$field = EXCLUDED.$field";
+            }
+        }
+        foreach ($insertonlyfields as $field => $value) {
+            $column = $columns[$field];
+            $value = $this->normalise_value($column, $value);
+            $values[] = "\$" . $i++;
+            $params[] = $value;
+            $fields[] = $field;
+        }
+        $values = implode(',', $values);
+        $fields = implode(',', $fields);
+        $constraint = implode(',', $uniqueindexcolumns);
+        $updates = implode(', ', $updates);
+
+        $sql = "INSERT INTO {$this->prefix}$table ($fields) VALUES ($values)
+                ON CONFLICT ($constraint) DO UPDATE SET $updates RETURNING id";
+
+        $this->query_start($sql, $params, SQL_QUERY_UPDATE); // For now use update type.
+        $result = pg_query_params($this->pgsql, $sql, $params);
+        if ($result) {
+            $row = pg_fetch_assoc($result);
+        }
+        $this->query_end($result);
+        pg_free_result($result);
+
+        return (int)reset($row);
+    }
+
+    /**
      * Set a single field in every table record which match a particular WHERE clause.
      *
      * @param string $table The database table to be checked against.
