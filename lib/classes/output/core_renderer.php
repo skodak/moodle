@@ -4701,6 +4701,9 @@ EOD;
                     'helpbutton' => $helpbutton,
                     'error' => $error,
                 ];
+                if (method_exists($element, 'is_initially_hidden') && $element->is_initially_hidden()) {
+                    $context['initiallyhidden'] = true;
+                }
                 return $this->render_from_template($templatename, $context);
             }
         } catch (\Exception $e) {

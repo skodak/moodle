@@ -22,6 +22,28 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 trait templatable_form_element {
+    /** @var bool support for server-side hiding of elements affected by hideif */
+    private $initiallyhidden = false;
+
+    /**
+     * Allows hiding of "hideif" elements during form rendering instead of
+     * waiting for JS to do it later which is causing visual glitches.
+     *
+     * @param bool $hidden
+     * @return void
+     */
+    public function set_initially_hidden(bool $hidden): void {
+        $this->initiallyhidden = $hidden;
+    }
+
+    /**
+     * Should the element be initially hidden as a result of hideif condition?
+     *
+     * @return bool
+     */
+    public function is_initially_hidden(): bool {
+        return $this->initiallyhidden;
+    }
 
     /**
      * Function to export the renderer data in a format that is suitable for a

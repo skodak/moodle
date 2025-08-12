@@ -1,4 +1,4 @@
-<div class="mb-3 row {{#error}}has-danger{{/error}} fitem {{#advanced}}advanced{{/advanced}} {{{element.extraclasses}}} {{{element.parentclasses}}}">
+<div {{#initiallyhidden}}hidden="hidden" style="display: none;"{{/initiallyhidden}} class="mb-3 row {{#error}}has-danger{{/error}} fitem {{#advanced}}advanced{{/advanced}} {{{element.extraclasses}}} {{{element.parentclasses}}}">
     <div class="col-md-3 col-form-label pb-0 pt-0">
         {{#text}}
             <label class="d-inline word-break" for="{{element.id}}">
