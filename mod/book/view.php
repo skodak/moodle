@@ -95,13 +95,14 @@ $PAGE->activityheader->disable();
 // No content in the book.
 if (!$chapter) {
     $PAGE->add_body_class('limitedwidth');
+    $PAGE->add_body_class('mod_book_view_all');
     //$PAGE->set_pagelayout('embedded');
     $PAGE->set_url('/mod/book/view.php', array('id' => $id));
     echo $OUTPUT->header();
 
     $courseurl = new moodle_url('/course/view.php', ['id' => $course->id]);
     echo '<div class="mod_book_print_header">';
-    echo '<h2>' . format_string($book->name) . '</h2>';
+    echo '<h1>' . format_string($book->name) . '</h1>';
     echo '<dl>';
     echo '<dt>' . get_string('course') . '</dt><dd>' . \core\output\html_writer::link($courseurl, format_string($course->fullname)) . '</dd>';
     echo '<dt>' . get_string('printedby', 'booktool_print') . '</dt><dd>' . fullname($USER) . '</dd>';

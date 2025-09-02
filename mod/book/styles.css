@@ -109,7 +109,8 @@ list-style: none;
         width: 100%;
     }
 
-    #page-mod-book-view section {
+    #page-mod-book-view.mod_book_view_all h2,
+    #page-mod-book-view.mod_book_view_all h3 {
         page-break-before: always;
     }
 }
