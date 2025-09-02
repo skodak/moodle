@@ -163,6 +163,9 @@ function book_get_chapter_title($chid, $chapters, $book, $context) {
 function book_add_fake_block($chapters, $chapter, $book, $cm, $edit = null) {
     global $PAGE, $USER;
 
+    // TODO delete me
+    return;
+
     if ($edit === null) {
         if (has_capability('mod/book:edit', context_module::instance($cm->id))) {
             if (isset($USER->editing)) {

@@ -136,7 +136,7 @@ $PAGE->set_heading($course->fullname);
 $PAGE->set_secondary_active_tab('modulepage');
 
 if ($chapters = book_preload_chapters($book)) {
-    book_add_fake_block($chapters, $chapter, $book, $cm);
+    //book_add_fake_block($chapters, $chapter, $book, $cm);
 }
 $PAGE->activityheader->set_attrs([
     "description" => '',

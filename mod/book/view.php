@@ -131,7 +131,6 @@ if (!$chapter) {
                 if ($ch->hidden and !$viewhidden) {
                     continue;
                 }
-                echo '<section class="mod_book_chapter">';
                 $chapter = $DB->get_record('book_chapters', ['id' => $ch->id]);
                 $chid = 'mod_book_chanpter_' . $chapter->id;
                 if ($book->customtitles) {
@@ -148,7 +147,6 @@ if (!$chapter) {
 
                 $chaptertext = file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book', 'chapter', $chapter->id);
                 echo format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => true, 'context' => $context]);
-                echo '</section>';
             }
 
             echo '</article>';

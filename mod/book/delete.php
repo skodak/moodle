@@ -87,7 +87,7 @@ if ($confirm) {
     // book_preload_chapters will fix parts including the pagenum.
     $chapters = book_preload_chapters($book);
 
-    book_add_fake_block($chapters, $chapter, $book, $cm);
+    //book_add_fake_block($chapters, $chapter, $book, $cm);
 
     // Bump the book revision.
     $DB->set_field('book', 'revision', $book->revision + 1, ['id' => $book->id]);
