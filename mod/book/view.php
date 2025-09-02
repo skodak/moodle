@@ -202,14 +202,14 @@ if (!$chapter) {
         $nav = <<<EOF
         <div class="mr-1">
           <div>
+          <a href="$prevurl">
             <small>
               <i class="fa-solid fa-arrow-left-long mr-1"></i>
               $strprev
-            </small>
-          </div>
-          <a href="$prevurl">
+            </small><br />
             $prevchapter->title
           </a>
+          </div>
         </div>
 EOF;
 
@@ -224,11 +224,11 @@ EOF;
         <div class="text-right ml-1">
 
           <div class="text-right">
-            <small>$strnext<i class="fa-solid fa-arrow-right-long ml-1"></i></small>
-          </div>
-          <a href="$nexturl">
+          <a href="$nexturl">          
+            <small>$strnext<i class="fa-solid fa-arrow-right-long ml-1"></i></small><br />
             $nextcahpter->title
           </a>
+          </div>
         </div>
 EOF;
 

@@ -45,6 +45,10 @@ list-style: none;
     list-style: none;
 }
 
+.path-mod-book .book_toc_numbered ul ul {
+    padding-inline-start: 1em;
+}
+
 /* toc style NONE*/
 .path-mod-book .book_toc_none ul {
     margin-left: 0;
