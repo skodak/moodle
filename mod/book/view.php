@@ -116,13 +116,6 @@ if (!$chapter) {
 
     echo $OUTPUT->header();
 
-    /*
-    $renderer = $PAGE->get_renderer('mod_book');
-    $actionmenu = new \mod_book\output\main_action_menu($cm->id, $chapters, $chapter, $book);
-    $renderedmenu = $renderer->render($actionmenu);
-    echo html_writer::div($renderedmenu, '', ['id' => 'mod_book-chaptersnavigation']);
-    */
-
     // The chapter itself.
     $hidden = $chapter->hidden ? ' dimmed_text' : null;
     echo $OUTPUT->box_start('container m-auto book_content' . $hidden, 'mod_book-chapter');
