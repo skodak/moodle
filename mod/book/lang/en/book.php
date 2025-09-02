@@ -114,6 +114,9 @@ $string['subplugintype_booktool_plural'] = 'Book tools';
 $string['removeallbooktags'] = 'All book tags';
 $string['tagarea_book_chapters'] = 'Book chapters';
 
+$string['viewallchapters'] = 'View all chapters';
+$string['viewtoconly']= 'View table of contents only';
+
 // Deprecated since Moodle 4.4.
 $string['navimages'] = 'Images';
 $string['navtext'] = 'Text';

@@ -31,6 +31,9 @@ defined('MOODLE_INTERNAL') || die;
  * @param navigation_node $node The node to add module settings to
  */
 function booktool_print_extend_settings_navigation(settings_navigation $settings, navigation_node $node) {
+    // TODO: remove printing stuff completely, use View all chapters instead
+    return;
+
     $params = $settings->get_page()->url->params();
     if (empty($params['id']) or empty($params['chapterid'])) {
         return;

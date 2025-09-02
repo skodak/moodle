@@ -194,9 +194,10 @@ function book_add_fake_block($chapters, $chapter, $book, $cm, $edit = null) {
  * @param stdClass $book
  * @param stdClass $cm
  * @param bool $edit
+ * @param bool $viewall
  * @return string
  */
-function book_get_toc($chapters, $chapter, $book, $cm, $edit) {
+function book_get_main_toc($chapters, $chapter, $book, $cm, $edit, $viewall) {
     global $USER, $OUTPUT;
 
     $toc = '';
@@ -285,7 +286,14 @@ function book_get_toc($chapters, $chapter, $book, $cm, $edit) {
             if ($chapter&& $ch->id == $chapter->id) {
                 $toc .= html_writer::tag('strong', $titleout, array('class' => 'text-truncate'));
             } else {
-                $toc .= html_writer::link(new moodle_url('view.php', array('id' => $cm->id, 'chapterid' => $ch->id)), $titleout,
+                if ($viewall) {
+                    $chid = 'mod_book_chanpter_' . $ch->id;
+                    $churl = "#" . $chid;
+                } else {
+                    $churl = new moodle_url('view.php', array('id' => $cm->id, 'chapterid' => $ch->id));
+                    $churl = $churl->out(false);
+                }
+                $toc .= html_writer::link($churl, $titleout,
                     array('title' => $titleunescaped, 'class' => 'text-truncate'));
             }
 
@@ -387,9 +395,14 @@ function book_get_toc($chapters, $chapter, $book, $cm, $edit) {
                 if ($chapter && $ch->id == $chapter->id) {
                     $toc .= html_writer::tag('strong', $title, array('class' => $cssclass));
                 } else {
-                    $toc .= html_writer::link(new moodle_url('view.php',
-                                              array('id' => $cm->id, 'chapterid' => $ch->id)),
-                                              $title, array('title' => s($titleunescaped), 'class' => $cssclass));
+                    if ($viewall) {
+                        $chid = 'mod_book_chanpter_' . $ch->id;
+                        $churl = "#" . $chid;
+                    } else {
+                        $churl = new moodle_url('view.php', array('id' => $cm->id, 'chapterid' => $ch->id));
+                        $churl = $churl->out(false);
+                    }
+                    $toc .= html_writer::link($churl, $title, array('title' => s($titleunescaped), 'class' => $cssclass));
                 }
 
                 if (!$ch->subchapter) {

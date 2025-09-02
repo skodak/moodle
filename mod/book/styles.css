@@ -72,3 +72,29 @@ list-style: none;
         margin-right: -5px;
     }
 }
+
+#page-mod-book-view .viewtoconly {
+    margin-bottom: 2em;
+}
+
+#page-mod-book-view .book-name-print {
+    display: none;
+}
+
+@media print {
+    #page-mod-book-view .book-name-print {
+        display: block !important;
+        padding-bottom: 1em;
+    }
+    #page-mod-book-view .footer-content-debugging {
+        display: none !important;
+    }
+
+    #page-mod-book-view .book_content .col-3 {
+        display: none;
+    }
+
+    #page-mod-book-view .book_content .col-9 {
+        width: 100%;
+    }
+}
