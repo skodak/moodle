@@ -95,10 +95,19 @@ $PAGE->activityheader->disable();
 // No content in the book.
 if (!$chapter) {
     $PAGE->add_body_class('limitedwidth');
+    //$PAGE->set_pagelayout('embedded');
     $PAGE->set_url('/mod/book/view.php', array('id' => $id));
     echo $OUTPUT->header();
 
-    echo '<h2 class="book-name-print">' . format_string($book->name) . '</h2>';
+    $courseurl = new moodle_url('/course/view.php', ['id' => $course->id]);
+    echo '<div class="mod_book_print_header">';
+    echo '<h2>' . format_string($book->name) . '</h2>';
+    echo '<dl>';
+    echo '<dt>' . get_string('course') . '</dt><dd>' . \core\output\html_writer::link($courseurl, format_string($course->fullname)) . '</dd>';
+    echo '<dt>' . get_string('printedby', 'booktool_print') . '</dt><dd>' . fullname($USER) . '</dd>';
+    echo '<dt>' . get_string('date') . '</dt><dd>' . userdate(time()) . '</dd>';
+    echo '</dl>';
+    echo '</div>';
 
     $introtext = file_rewrite_pluginfile_urls($book->intro, 'pluginfile.php', $context->id, 'mod_book', 'intro', null);
     $intro = format_text($introtext, $book->introformat, array('noclean' => true, 'context' => $context));
@@ -117,10 +126,12 @@ if (!$chapter) {
             $url = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'viewall' => 0]);
             echo '<div class="viewtoconly float-end d-print-none">' . html_writer::link($url, get_string('viewtoconly', 'mod_book')) . '</div><br />';
 
+            echo '<article class="mod_book_chapters">';
             foreach ($chapters as $ch) {
                 if ($ch->hidden and !$viewhidden) {
                     continue;
                 }
+                echo '<section class="mod_book_chapter">';
                 $chapter = $DB->get_record('book_chapters', ['id' => $ch->id]);
                 $chid = 'mod_book_chanpter_' . $chapter->id;
                 if ($book->customtitles) {
@@ -137,7 +148,10 @@ if (!$chapter) {
 
                 $chaptertext = file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book', 'chapter', $chapter->id);
                 echo format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => true, 'context' => $context]);
+                echo '</section>';
             }
+
+            echo '</article>';
         } else {
             $url = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'viewall' => 1]);
             echo '<div class="float-end d-print-none">' . html_writer::link($url, get_string('viewallchapters', 'mod_book')) . '</div>';

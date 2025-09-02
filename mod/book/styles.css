@@ -77,12 +77,12 @@ list-style: none;
     margin-bottom: 2em;
 }
 
-#page-mod-book-view .book-name-print {
+#page-mod-book-view .mod_book_print_header {
     display: none;
 }
 
 @media print {
-    #page-mod-book-view .book-name-print {
+    #page-mod-book-view .mod_book_print_header {
         display: block !important;
         padding-bottom: 1em;
     }
@@ -96,5 +96,9 @@ list-style: none;
 
     #page-mod-book-view .book_content .col-9 {
         width: 100%;
+    }
+
+    #page-mod-book-view section {
+        page-break-before: always;
     }
 }
