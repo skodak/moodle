@@ -81,6 +81,17 @@ list-style: none;
     display: none;
 }
 
+/* make as much room as possible for the book chapter.*/
+#page-mod-book-view.mod_book_view_chapter #page-header {
+    display: none;
+}
+#page-mod-book-view.mod_book_view_chapter .secondary-navigation {
+    display: none;
+}
+#page-mod-book-view.mod_book_view_chapter #page.drawers {
+    margin-top: 1.2em;
+}
+
 @media print {
     #page-mod-book-view .mod_book_print_header {
         display: block !important;

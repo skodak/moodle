@@ -146,7 +146,7 @@ if (!$chapter) {
                 }
 
                 $chaptertext = file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book', 'chapter', $chapter->id);
-                echo format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => true, 'context' => $context]);
+                echo format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => false, 'context' => $context]);
             }
 
             echo '</article>';
@@ -160,6 +160,7 @@ if (!$chapter) {
     die;
 }
 
+    $PAGE->add_body_class('mod_book_view_chapter');
     $PAGE->set_url('/mod/book/view.php', ['id' => $id, 'chapterid' => $chapterid]);
     // The chapter doesnt exist or it is hidden for students.
     if (!$chapter or ($chapter->hidden and !$viewhidden)) {
@@ -242,7 +243,7 @@ if (!$chapter) {
 
     $chaptertext = file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book',
         'chapter', $chapter->id);
-    echo format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => true,
+    echo format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => false,
         'context' => $context]);
 
     $actionmenu = new \mod_book\output\main_action_menu($cm->id, $chapters, $chapter);
