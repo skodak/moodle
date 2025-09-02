@@ -204,13 +204,14 @@ if (!$chapter) {
     echo '<nav class="bg-light my-4 p-3 d-flex justify-content-between">';
 
     if ($prevchapter) {
+        $strprev = get_string('navprev', 'mod_book');
         $prevurl = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $prevchapter->id]);
         $nav = <<<EOF
         <div class="mr-1">
           <div>
             <small>
               <i class="fa-solid fa-arrow-left-long mr-1"></i>
-              Previous
+              $strprev
             </small>
           </div>
           <a href="$prevurl">
@@ -224,12 +225,13 @@ EOF;
         echo '<div class="text-right ml-1"></div>';
     }
     if ($nextcahpter) {
+        $strnext = get_string('navnext', 'mod_book');
         $nexturl = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $nextcahpter->id]);
         $nav = <<<EOF
         <div class="text-right ml-1">
 
           <div class="text-right">
-            <small>Next<i class="fa-solid fa-arrow-right-long ml-1"></i></small>
+            <small>$strnext<i class="fa-solid fa-arrow-right-long ml-1"></i></small>
           </div>
           <a href="$nexturl">
             $nextcahpter->title
