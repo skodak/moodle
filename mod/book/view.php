@@ -74,40 +74,37 @@ $chapters = book_preload_chapters($book);
 if ($allowedit and !$chapters) {
     redirect('edit.php?cmid='.$cm->id); // No chapters - add new one.
 }
-// Check chapterid and read chapter data
-if ($chapterid == '0') { // Go to first chapter if no given.
-    // Trigger course module viewed event.
-    book_view($book, null, false, $course, $cm, $context);
-
-    foreach ($chapters as $ch) {
-        if ($edit || ($ch->hidden && $viewhidden)) {
-            $chapterid = $ch->id;
-            break;
-        }
-        if (!$ch->hidden) {
-            $chapterid = $ch->id;
-            break;
-        }
-    }
-}
 
 // Prepare header.
 $pagetitle = $book->name;
-if ($chapter = $DB->get_record('book_chapters', ['id' => $chapterid, 'bookid' => $book->id])) {
+if ($chapterid && $chapter = $DB->get_record('book_chapters', ['id' => $chapterid, 'bookid' => $book->id])) {
     $pagetitle .= ": {$chapter->title}";
+} else {
+    $chapterid = 0;
+    $chapter = false;
 }
 
 $PAGE->set_other_editing_capability('mod/book:edit');
 $PAGE->set_title($pagetitle);
 $PAGE->set_heading($course->fullname);
-$PAGE->add_body_class('limitedwidth');
 
 // No content in the book.
-if (!$chapterid) {
+if (!$chapter) {
+    $PAGE->add_body_class('limitedwidth');
     $PAGE->set_url('/mod/book/view.php', array('id' => $id));
     echo $OUTPUT->header();
-    echo $OUTPUT->notification(get_string('nocontent', 'mod_book'), 'info', false);
+
+    if ($chapters) {
+        echo '<div class="book_toc_main">';
+            echo book_get_toc($chapters, $chapter, $book, $cm, $edit);
+        echo '</div>';
+    }
+
+    if (!$chapters) {
+        echo $OUTPUT->notification(get_string('nocontent', 'mod_book'), 'info', false);
+    }
 } else {
+    $PAGE->activityheader->disable();
     $PAGE->set_url('/mod/book/view.php', ['id' => $id, 'chapterid' => $chapterid]);
     // The chapter doesnt exist or it is hidden for students.
     if (!$chapter or ($chapter->hidden and !$viewhidden)) {
@@ -115,36 +112,138 @@ if (!$chapterid) {
         throw new moodle_exception('errorchapter', 'mod_book', $courseurl);
     }
     // Add the Book TOC block.
-    book_add_fake_block($chapters, $chapter, $book, $cm, $edit);
     book_view($book, $chapter, \mod_book\helper::is_last_visible_chapter($chapter->id, $chapters), $course, $cm, $context);
 
     echo $OUTPUT->header();
 
+    /*
     $renderer = $PAGE->get_renderer('mod_book');
     $actionmenu = new \mod_book\output\main_action_menu($cm->id, $chapters, $chapter, $book);
     $renderedmenu = $renderer->render($actionmenu);
     echo html_writer::div($renderedmenu, '', ['id' => 'mod_book-chaptersnavigation']);
+    */
 
     // The chapter itself.
     $hidden = $chapter->hidden ? ' dimmed_text' : null;
-    echo $OUTPUT->box_start('generalbox book_content' . $hidden, 'mod_book-chapter');
+    echo $OUTPUT->box_start('container m-auto book_content' . $hidden, 'mod_book-chapter');
+    echo '<div class="row">';
+
+    echo '<div class="col-3">';
+    echo '<div class="book_toc_chapter position-sticky" style="top:5rem">';
+    $url = new moodle_url('/mod/book/view.php', ['id' => $cm->id]);
+    echo '<h2 class="h4">' . \core\output\html_writer::link($url, get_string('toc', 'mod_book')). '</h2>';
+    echo book_get_chanpter($chapters, $chapter, $book, $cm);
+    echo '</div>';
+    echo '</div>';
+
+    echo '<div class="col-9">';
+
+    $buttons = '';
+
+    if ($edit) {
+
+        $chaptertitle = format_string($chapter->title);
+        $buttons .= html_writer::link(new moodle_url('edit.php', array('cmid' => $cm->id, 'id' => $chapter->id)),
+            $OUTPUT->pix_icon('t/edit', get_string('editchapter', 'mod_book', $chaptertitle)),
+            array('title' => get_string('editchapter', 'mod_book', $chaptertitle)));
+
+        $deleteaction = new confirm_action(get_string('deletechapter', 'mod_book', $chaptertitle));
+        $buttons .= $OUTPUT->action_icon(
+            new moodle_url('delete.php', [
+                'id'        => $cm->id,
+                'chapterid' => $chapter->id,
+                'sesskey'   => sesskey(),
+                'confirm'   => 1,
+            ]),
+            new pix_icon('t/delete', get_string('deletechapter', 'mod_book', $chaptertitle)),
+            $deleteaction,
+            ['title' => get_string('deletechapter', 'mod_book', $chaptertitle)]
+        );
+
+        if ($chapter->hidden) {
+            $buttons .= html_writer::link(new moodle_url('show.php', array('id' => $cm->id, 'chapterid' => $chapter->id, 'sesskey' => $USER->sesskey)),
+                $OUTPUT->pix_icon('t/show', get_string('showchapter', 'mod_book', $chaptertitle)),
+                array('title' => get_string('showchapter', 'mod_book', $chaptertitle)));
+        } else {
+            $buttons .= html_writer::link(new moodle_url('show.php', array('id' => $cm->id, 'chapterid' => $chapter->id, 'sesskey' => $USER->sesskey)),
+                $OUTPUT->pix_icon('t/hide', get_string('hidechapter', 'mod_book', $chaptertitle)),
+                array('title' => get_string('hidechapter', 'mod_book', $chaptertitle)));
+        }
+
+        $buttontitle = get_string('addafterchapter', 'mod_book', ['title' => $chapter->title]);
+        $buttons .= html_writer::link(new moodle_url('edit.php', array('cmid' => $cm->id, 'pagenum' => $chapter->pagenum, 'subchapter' => $chapter->subchapter)),
+            $OUTPUT->pix_icon('add', $buttontitle, 'mod_book'), array('title' => $buttontitle));
+    }
+
+
+    if ($buttons !== '') {
+        echo '<div class="float-end">' . $buttons . '</div>';
+    }
 
     if (!$book->customtitles) {
         if (!$chapter->subchapter) {
             $currtitle = book_get_chapter_title($chapter->id, $chapters, $book, $context);
-            echo $OUTPUT->heading($currtitle, 3);
+            echo $OUTPUT->heading($currtitle, 2, 'h3');
         } else {
             $currtitle = book_get_chapter_title($chapters[$chapter->id]->parent, $chapters, $book, $context);
             $currsubtitle = book_get_chapter_title($chapter->id, $chapters, $book, $context);
-            echo $OUTPUT->heading($currtitle, 3);
-            echo $OUTPUT->heading($currsubtitle, 4);
+            echo $OUTPUT->heading($currtitle, 2, 'h3');
+            echo $OUTPUT->heading($currsubtitle, 3, 'h4');
         }
     }
+
     $chaptertext = file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book',
         'chapter', $chapter->id);
     echo format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => true,
         'context' => $context]);
 
+    $actionmenu = new \mod_book\output\main_action_menu($cm->id, $chapters, $chapter);
+    $prevchapter = $actionmenu->get_previous_chapter();
+    $nextcahpter = $actionmenu->get_next_chapter();
+
+    echo '<nav class="bg-light my-4 p-3 d-flex justify-content-between">';
+
+    if ($prevchapter) {
+        $prevurl = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $prevchapter->id]);
+        $nav = <<<EOF
+        <div class="mr-1">
+          <div>
+            <small>
+              <i class="fa-solid fa-arrow-left-long mr-1"></i>
+              Previous
+            </small>
+          </div>
+          <a href="$prevurl">
+            $prevchapter->title
+          </a>
+        </div>
+EOF;
+
+        echo $nav;
+    } else {
+        echo '<div class="text-right ml-1"></div>';
+    }
+    if ($nextcahpter) {
+        $nexturl = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $nextcahpter->id]);
+        $nav = <<<EOF
+        <div class="text-right ml-1">
+
+          <div class="text-right">
+            <small>Next<i class="fa-solid fa-arrow-right-long ml-1"></i></small>
+          </div>
+          <a href="$nexturl">
+            $nextcahpter->title
+          </a>
+        </div>
+EOF;
+
+        echo $nav;
+    }
+
+    echo '</nav>';
+
+    echo '</div>';
+    echo '</div>';
     echo $OUTPUT->box_end();
 
     if (core_tag_tag::is_enabled('mod_book', 'book_chapters')) {

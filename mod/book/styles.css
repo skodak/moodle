@@ -11,13 +11,19 @@
 .path-mod-book .book_toc li {
     flex: 1 1 100%;
 }
+
+/* TDO fix highlighting of subchapters */
+.path-mod-book .book_toc_main li:hover {
+background-color: yellow;
+}
+
 .path-mod-book .book_toc_indented > ul {
-    margin-left: 0;
-    padding-left: 0;
+margin-left: 0;
+padding-left: 0;
 }
 
 .path-mod-book .book_toc_indented li {
-    list-style: none;
+list-style: none;
 }
 
 /* toc style BULLETED*/

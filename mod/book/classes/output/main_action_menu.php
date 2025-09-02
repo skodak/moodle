@@ -63,7 +63,7 @@ class main_action_menu implements templatable, renderable {
      *
      * @return ?stdClass The next chapter of the book.
      */
-    protected function get_next_chapter(): ?stdClass {
+    public function get_next_chapter(): ?stdClass {
         $nextpageid = $this->chapter->pagenum + 1;
         // Early return if the current chapter is also the last chapter.
         if ($nextpageid > count($this->chapters)) {
@@ -84,7 +84,7 @@ class main_action_menu implements templatable, renderable {
      *
      * @return ?stdClass The previous chapter of the book.
      */
-    protected function get_previous_chapter(): ?stdClass {
+    public function get_previous_chapter(): ?stdClass {
         $prevpageid = $this->chapter->pagenum - 1;
         // Early return if the current chapter is also the first chapter.
         if ($prevpageid < 1) {

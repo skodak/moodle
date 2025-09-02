@@ -282,7 +282,7 @@ function book_get_toc($chapters, $chapter, $book, $cm, $edit) {
                 }
             }
             $toc .= html_writer::start_tag('div', array('class' => 'd-flex'));
-            if ($ch->id == $chapter->id) {
+            if ($chapter&& $ch->id == $chapter->id) {
                 $toc .= html_writer::tag('strong', $titleout, array('class' => 'text-truncate'));
             } else {
                 $toc .= html_writer::link(new moodle_url('view.php', array('id' => $cm->id, 'chapterid' => $ch->id)), $titleout,
@@ -384,7 +384,7 @@ function book_get_toc($chapters, $chapter, $book, $cm, $edit) {
 
                 $cssclass = ($ch->hidden && $viewhidden) ? 'dimmed_text' : '';
 
-                if ($ch->id == $chapter->id) {
+                if ($chapter && $ch->id == $chapter->id) {
                     $toc .= html_writer::tag('strong', $title, array('class' => $cssclass));
                 } else {
                     $toc .= html_writer::link(new moodle_url('view.php',
@@ -407,6 +407,108 @@ function book_get_toc($chapters, $chapter, $book, $cm, $edit) {
         $toc .= html_writer::end_tag('ul');
 
     }
+
+    $toc .= html_writer::end_tag('div');
+
+    $toc = str_replace('<ul></ul>', '', $toc); // Cleanup of invalid structures.
+
+    return $toc;
+}
+
+/**
+ * Generate toc structure
+ *
+ * @param array $chapters
+ * @param stdClass $chapter
+ * @param stdClass $book
+ * @param stdClass $cm
+ * @return string
+ */
+function book_get_chanpter($chapters, $chapter, $book, $cm) {
+    global $USER, $OUTPUT;
+
+    $toc = '';
+    $nch = 0;   // Chapter number
+    $ns = 0;    // Subchapter number
+    $first = 1;
+
+    $context = context_module::instance($cm->id);
+    $viewhidden = has_capability('mod/book:viewhiddenchapters', $context);
+
+    switch ($book->numbering) {
+        case BOOK_NUM_NONE:
+            $toc .= html_writer::start_tag('div', array('class' => 'book_toc book_toc_none clearfix'));
+            break;
+        case BOOK_NUM_NUMBERS:
+            $toc .= html_writer::start_tag('div', array('class' => 'book_toc book_toc_numbered clearfix'));
+            break;
+        case BOOK_NUM_BULLETS:
+            $toc .= html_writer::start_tag('div', array('class' => 'book_toc book_toc_bullets clearfix'));
+            break;
+        case BOOK_NUM_INDENTED:
+            $toc .= html_writer::start_tag('div', array('class' => 'book_toc book_toc_indented clearfix'));
+            break;
+    }
+
+        $toc .= html_writer::start_tag('ul');
+        foreach ($chapters as $ch) {
+            $title = trim(format_string($ch->title, true, array('context'=>$context)));
+            $titleunescaped = trim(format_string($ch->title, true, array('context' => $context, 'escape' => false)));
+            if (!$ch->hidden || ($ch->hidden && $viewhidden)) {
+                if (!$ch->subchapter) {
+                    $nch++;
+                    $ns = 0;
+
+                    if ($first) {
+                        $toc .= html_writer::start_tag('li');
+                    } else {
+                        $toc .= html_writer::end_tag('ul');
+                        $toc .= html_writer::end_tag('li');
+                        $toc .= html_writer::start_tag('li');
+                    }
+
+                    if ($book->numbering == BOOK_NUM_NUMBERS) {
+                        $title = "$nch. $title";
+                    }
+                } else {
+                    $ns++;
+
+                    if ($first) {
+                        $toc .= html_writer::start_tag('li');
+                        $toc .= html_writer::start_tag('ul');
+                        $toc .= html_writer::start_tag('li');
+                    } else {
+                        $toc .= html_writer::start_tag('li');
+                    }
+
+                    if ($book->numbering == BOOK_NUM_NUMBERS) {
+                        $title = "$nch.$ns. $title";
+                    }
+                }
+
+                $cssclass = ($ch->hidden && $viewhidden) ? 'dimmed_text' : '';
+
+                if ($chapter && $ch->id == $chapter->id) {
+                    $toc .= html_writer::tag('strong', $title, array('class' => $cssclass));
+                } else {
+                    $toc .= html_writer::link(new moodle_url('view.php',
+                        array('id' => $cm->id, 'chapterid' => $ch->id)),
+                        $title, array('title' => s($titleunescaped), 'class' => $cssclass));
+                }
+
+                if (!$ch->subchapter) {
+                    $toc .= html_writer::start_tag('ul');
+                } else {
+                    $toc .= html_writer::end_tag('li');
+                }
+
+                $first = 0;
+            }
+        }
+
+        $toc .= html_writer::end_tag('ul');
+        $toc .= html_writer::end_tag('li');
+        $toc .= html_writer::end_tag('ul');
 
     $toc .= html_writer::end_tag('div');
 
