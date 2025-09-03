@@ -122,26 +122,26 @@ if (!$chapters) {
 if (!$chapter) {
     $PAGE->add_body_class('limitedwidth');
     $PAGE->add_body_class('mod_book_view_all');
-    //$PAGE->set_pagelayout('embedded');
+
+    $data = [
+        'title' => 'Book actions', // TODO: localise
+        'actions' => [],
+    ];
+    $data['actions'][] = [
+        'customhtml' => '<a href="#" class="dropdown-item" onclick="window.print();">' . $OUTPUT->pix_icon('e/print', '') . 'Print book</a>',
+    ];
 
     $hook = new \mod_book\hook\fetch_book_actions($book, $context, $cm);
     \core\di::get(\core\hook\manager::class)->dispatch($hook);
-    $actions = $hook->get_actions();
-    $dropdown = '';
-    if ($actions) {
-        $data = [
-            'title' => 'Actions', // TODO: localise
-            'actions' => [],
-        ];
-        foreach ($actions as $action) {
-            if ($action['icon']) {
-                $action['icon'] = $OUTPUT->render($action['icon']);
-            }
-            $data['actions'][] = $action;
+    foreach ($hook->get_actions() as $action) {
+        if ($action['icon']) {
+            $action['icon'] = $OUTPUT->render($action['icon']);
         }
-        $dropdown = $OUTPUT->render_from_template('mod_book/dropdown', $data);
+        $data['actions'][] = $action;
     }
-    $PAGE->add_header_action($dropdown);
+    if ($data['actions']) {
+        $PAGE->add_header_action($OUTPUT->render_from_template('mod_book/dropdown', $data));
+    }
 
     echo $OUTPUT->header();
 
@@ -179,7 +179,7 @@ if (!$chapter) {
             $returnurl = $returnurl->out_as_local_url(false) ;
 
             $data = [
-                'title' => 'Actions', // TODO: localise
+                'title' => 'Chapter actions', // TODO: localise
                 'actions' => [],
             ];
 
