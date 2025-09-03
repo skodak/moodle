@@ -158,7 +158,9 @@ if (!$chapter) {
 
     if ($viewall) {
         echo '<article class="mod_book_chapters">';
+        $i = 0;
         foreach ($chapters as $ch) {
+            $i++;
             if ($ch->hidden and !$viewhidden) {
                 continue;
             }
@@ -174,6 +176,25 @@ if (!$chapter) {
             ];
 
             $chaptertitle = format_string($chapter->title);
+
+            if ($i != 1) {
+                $data['actions'][] = [
+                    'label' => get_string('moveup', 'mod_book'),
+                    'url' => new moodle_url('move.php', array('id' => $cm->id, 'chapterid' => $ch->id, 'up' => '1', 'sesskey' => $USER->sesskey, 'returnurl' => $returnurl)),
+                    'icon' => $OUTPUT->pix_icon('t/up', ''),
+                ];
+            }
+            if ($i != count($chapters)) {
+                $data['actions'][] = [
+                    'label' => get_string('movedown', 'mod_book'),
+                    'url' => new moodle_url('move.php', array('id' => $cm->id, 'chapterid' => $ch->id, 'up' => '0', 'sesskey' => $USER->sesskey, 'returnurl' => $returnurl)),
+                    'icon' => $OUTPUT->pix_icon('t/down', ''),
+                ];
+            }
+            $data['actions'][] = [
+                'divider' => true,
+            ];
+
             $data['actions'][] = [
                 'label' => get_string('edit'),
                 'url' => new moodle_url('edit.php', array('cmid' => $cm->id, 'id' => $chapter->id, 'returnurl' => $returnurl)),

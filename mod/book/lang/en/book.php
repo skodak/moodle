@@ -66,6 +66,8 @@ $string['indicator:socialbreadthdef'] = 'Book social';
 $string['indicator:socialbreadthdef_help'] = 'The participant has reached this percentage of the social engagement offered by the Book activities during this analysis interval (Levels = No participation, Participant alone)';
 $string['indicator:socialbreadthdef_link'] = 'Learning_analytics_indicators#Social_breadth';
 $string['movechapterup'] = 'Move chapter up "{$a}"';
+$string['moveup'] = 'Move up';
+$string['movedown'] = 'Move down';
 $string['movechapterdown'] = 'Move chapter down "{$a}"';
 $string['privacy:metadata'] = 'The book activity module does not store any personal data.';
 $string['search:activity'] = 'Book - resource information';
