@@ -98,6 +98,29 @@ list-style: none;
     margin-top: 1.2em;
 }
 
+.path-mod-book {
+    .book_toc {
+        font-size: 1rem;
+        font-weight: 400;
+
+        ul {
+            padding: 0 !important;
+        }
+        li {
+            margin: 0.25rem 0;
+        }
+        li li {
+            margin-left: 1rem;
+        }
+        a {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    }
+}
+
 @media print {
     #page-mod-book-view .mod_book_print_header {
         display: block !important;
