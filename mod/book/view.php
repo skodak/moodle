@@ -289,6 +289,7 @@ if (!$chapter) {
 }
 
     $PAGE->activityheader->disable();
+    //$PAGE->set_secondary_navigation(false);
 
     $PAGE->add_body_class('mod_book_view_chapter');
     // The chapter doesnt exist or it is hidden for students.
@@ -298,6 +299,9 @@ if (!$chapter) {
     }
     // Add the Book TOC block.
     book_view($book, $chapter, \mod_book\helper::is_last_visible_chapter($chapter->id, $chapters), $course, $cm, $context);
+
+    $firstchapter = reset($chapters);
+    $lastchapter = end($chapters);
 
     echo $OUTPUT->header();
 
@@ -338,6 +342,28 @@ if (!$chapter) {
 $data['actions'][] = [
     'customhtml' => '<a href="#" class="dropdown-item" onclick="window.print();">' . $OUTPUT->pix_icon('e/print', '') . 'Print chapter</a>',
 ];
+
+    if ($allowedit) {
+        $data['actions'][] = [
+            'divider' => true,
+        ];
+
+        if ($chapter->id != $firstchapter->id) {
+            $data['actions'][] = [
+                'label' => 'Move chapter up', // TODO localise
+                'url' => new moodle_url('move.php', array('id' => $cm->id, 'chapterid' => $chapter->id, 'up' => '1', 'sesskey' => $USER->sesskey)),
+                'icon' => $OUTPUT->pix_icon('t/up', ''),
+            ];
+        }
+        if ($chapter->id != $lastchapter->id) {
+            $data['actions'][] = [
+                'label' => 'Move chapter down', // TODO localise
+                'url' => new moodle_url('move.php', array('id' => $cm->id, 'chapterid' => $chapter->id, 'up' => '0', 'sesskey' => $USER->sesskey)),
+                'icon' => $OUTPUT->pix_icon('t/down', ''),
+            ];
+        }
+    }
+
 
 $chaptertitle = format_string($chapter->title);
 
