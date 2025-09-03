@@ -280,6 +280,10 @@ if (!$chapter) {
 
     $PAGE->add_body_class('mod_book_view_chapter');
     $PAGE->set_url('/mod/book/view.php', ['id' => $id, 'chapterid' => $chapterid]);
+    
+    // Add searchbar CSS and JS for chapter view only
+    $PAGE->requires->css(new moodle_url('/mod/book/book_searchbar.css'));
+    $PAGE->requires->js(new moodle_url('/mod/book/book_searchbar.js'), true);
     // The chapter doesnt exist or it is hidden for students.
     if (!$chapter or ($chapter->hidden and !$viewhidden)) {
         $courseurl = new moodle_url('/course/view.php', ['id' => $course->id]);
