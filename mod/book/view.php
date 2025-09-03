@@ -212,6 +212,10 @@ if (!$chapter) {
             $dropdown = $OUTPUT->render_from_template('mod_book/dropdown', $data);
             echo '<div class="float-end d-print-none">' . $dropdown . '</div>';
 
+            if ($chapter->hidden) {
+                echo '<div class="dimmed_text">';
+            }
+
             if ($book->customtitles) {
                 echo '<div id="'. $chid . '" />';
             } else {
@@ -226,6 +230,10 @@ if (!$chapter) {
 
             $chaptertext = file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book', 'chapter', $chapter->id);
             echo format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => false, 'context' => $context]);
+
+            if ($chapter->hidden) {
+                echo '</div>';
+            }
         }
 
         echo '</article>';
