@@ -227,7 +227,7 @@ if (!$chapter) {
         $data['actions'][] = [
             'label' => get_string('edit'),
             'url' => new moodle_url('edit.php', array('cmid' => $cm->id, 'id' => $chapter->id)),
-            'icon' => $OUTPUT->pix_icon('t/edit', get_string('editchapter', 'mod_book', $chaptertitle))
+            'icon' => $OUTPUT->pix_icon('t/edit', get_string('editchapter', 'mod_book', $chaptertitle)),
         ];
 
         $deleteaction = new confirm_action(get_string('deletechapter', 'mod_book', $chaptertitle));
@@ -247,20 +247,25 @@ if (!$chapter) {
             'customhtml' => $action,
         ];
 
-        $buttons = '';
         if ($chapter->hidden) {
-            $buttons .= html_writer::link(new moodle_url('show.php', array('id' => $cm->id, 'chapterid' => $chapter->id, 'sesskey' => $USER->sesskey)),
-                $OUTPUT->pix_icon('t/show', get_string('showchapter', 'mod_book', $chaptertitle)),
-                array('title' => get_string('showchapter', 'mod_book', $chaptertitle)));
+            $label = get_string('show');
+            $icon = $OUTPUT->pix_icon('t/show', get_string('showchapter', 'mod_book', $chaptertitle));
         } else {
-            $buttons .= html_writer::link(new moodle_url('show.php', array('id' => $cm->id, 'chapterid' => $chapter->id, 'sesskey' => $USER->sesskey)),
-                $OUTPUT->pix_icon('t/hide', get_string('hidechapter', 'mod_book', $chaptertitle)),
-                array('title' => get_string('hidechapter', 'mod_book', $chaptertitle)));
+            $label = get_string('hide');
+            $icon = $OUTPUT->pix_icon('t/hide', get_string('hidechapter', 'mod_book', $chaptertitle));
         }
+        $data['actions'][] = [
+            'label' => $label,
+            'url' => new moodle_url('show.php', array('id' => $cm->id, 'chapterid' => $chapter->id, 'sesskey' => $USER->sesskey)),
+            'icon' => $icon,
+        ];
 
         $buttontitle = get_string('addafterchapter', 'mod_book', ['title' => $chapter->title]);
-        $buttons .= html_writer::link(new moodle_url('edit.php', array('cmid' => $cm->id, 'pagenum' => $chapter->pagenum, 'subchapter' => $chapter->subchapter)),
-            $OUTPUT->pix_icon('add', $buttontitle, 'mod_book'), array('title' => $buttontitle));
+        $data['actions'][] = [
+            'label' => get_string('addafter', 'mod_book'),
+            'url' => new moodle_url('edit.php', array('cmid' => $cm->id, 'pagenum' => $chapter->pagenum, 'subchapter' => $chapter->subchapter)),
+            'icon' => $OUTPUT->pix_icon('add', $buttontitle, 'mod_book'),
+        ];
 
         $dropdown = $OUTPUT->render_from_template('mod_book/dropdown', $data);
     }
