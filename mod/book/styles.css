@@ -12,11 +12,6 @@
     flex: 1 1 100%;
 }
 
-/* TDO fix highlighting of subchapters */
-.path-mod-book .book_toc_main li:hover {
-    background-color: yellow;
-}
-
 .path-mod-book .book_toc_indented > ul {
 margin-left: 0;
 padding-left: 0;
@@ -57,6 +52,17 @@ list-style: none;
 
 .path-mod-book .book_toc_none li {
     list-style: none;
+}
+
+.path-mod-book #mod_book-chaptersnavigation {
+    top: 80px;
+    width: inherit;
+    margin: 0 -35px;
+    position: sticky; /* Make navigation sticky. */
+}
+
+.path-mod-book #mod_book-chaptersnavigation .tertiary-navigation .navitem {
+    margin-bottom: -52px;
 }
 
 .path-mod-book .book_content {
