@@ -98,8 +98,6 @@ if (!$chapters) {
     die;
 }
 
-$PAGE->activityheader->disable();
-
 // No content in the book.
 if (!$chapter) {
     $PAGE->add_body_class('limitedwidth');
@@ -144,11 +142,10 @@ if (!$chapter) {
     echo '<dt>' . get_string('printedby', 'booktool_print') . '</dt><dd>' . fullname($USER) . '</dd>';
     echo '<dt>' . get_string('date') . '</dt><dd>' . userdate(time()) . '</dd>';
     echo '</dl>';
-    echo '</div>';
-
     $introtext = file_rewrite_pluginfile_urls($book->intro, 'pluginfile.php', $context->id, 'mod_book', 'intro', null);
     $intro = format_text($introtext, $book->introformat, array('noclean' => true, 'context' => $context));
     echo '<div class="mod_book_intro">' . $intro . '</div>';
+    echo '</div>';
 
     if ($chapters) {
         echo '<div class="book_toc_main">';
@@ -268,6 +265,8 @@ if (!$chapter) {
     echo $OUTPUT->footer();
     die;
 }
+
+    $PAGE->activityheader->disable();
 
     $PAGE->add_body_class('mod_book_view_chapter');
     $PAGE->set_url('/mod/book/view.php', ['id' => $id, 'chapterid' => $chapterid]);

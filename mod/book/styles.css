@@ -113,4 +113,8 @@ list-style: none;
     #page-mod-book-view.mod_book_view_all h3 {
         page-break-before: always;
     }
+
+    #page-mod-book-view .activity-header {
+        display: none;
+    }
 }
