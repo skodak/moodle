@@ -177,61 +177,66 @@ if (!$chapter) {
 
             $chaptertitle = format_string($chapter->title);
 
-            if ($i != 1) {
+            if ($edit) {
+                if ($i != 1) {
+                    $data['actions'][] = [
+                        'label' => get_string('moveup', 'mod_book'),
+                        'url' => new moodle_url('move.php', array('id' => $cm->id, 'chapterid' => $ch->id, 'up' => '1', 'sesskey' => $USER->sesskey, 'returnurl' => $returnurl)),
+                        'icon' => $OUTPUT->pix_icon('t/up', ''),
+                    ];
+                }
+                if ($i != count($chapters)) {
+                    $data['actions'][] = [
+                        'label' => get_string('movedown', 'mod_book'),
+                        'url' => new moodle_url('move.php', array('id' => $cm->id, 'chapterid' => $ch->id, 'up' => '0', 'sesskey' => $USER->sesskey, 'returnurl' => $returnurl)),
+                        'icon' => $OUTPUT->pix_icon('t/down', ''),
+                    ];
+                }
                 $data['actions'][] = [
-                    'label' => get_string('moveup', 'mod_book'),
-                    'url' => new moodle_url('move.php', array('id' => $cm->id, 'chapterid' => $ch->id, 'up' => '1', 'sesskey' => $USER->sesskey, 'returnurl' => $returnurl)),
-                    'icon' => $OUTPUT->pix_icon('t/up', ''),
+                    'divider' => true,
+                ];
+
+                $data['actions'][] = [
+                    'label' => get_string('edit'),
+                    'url' => new moodle_url('edit.php', array('cmid' => $cm->id, 'id' => $chapter->id, 'returnurl' => $returnurl)),
+                    'icon' => $OUTPUT->pix_icon('t/edit', get_string('editchapter', 'mod_book', $chaptertitle)),
+                ];
+
+                $deleteaction = new confirm_action(get_string('deletechapter', 'mod_book', $chaptertitle));
+                $action = $OUTPUT->action_link(
+                    new moodle_url('delete.php', [
+                        'id' => $cm->id,
+                        'chapterid' => $chapter->id,
+                        'sesskey' => sesskey(),
+                        'confirm' => 1,
+                    ]),
+                    get_string('delete'),
+                    $deleteaction,
+                    ['class' => 'dropdown-item text-danger'],
+                    new pix_icon('t/delete', get_string('deletechapter', 'mod_book', $chaptertitle))
+                );
+                $data['actions'][] = [
+                    'customhtml' => $action,
+                ];
+
+                if ($chapter->hidden) {
+                    $label = get_string('show');
+                    $icon = $OUTPUT->pix_icon('t/show', get_string('showchapter', 'mod_book', $chaptertitle));
+                } else {
+                    $label = get_string('hide');
+                    $icon = $OUTPUT->pix_icon('t/hide', get_string('hidechapter', 'mod_book', $chaptertitle));
+                }
+                $data['actions'][] = [
+                    'label' => $label,
+                    'url' => new moodle_url('show.php', array('id' => $cm->id, 'chapterid' => $chapter->id, 'sesskey' => $USER->sesskey, 'returnurl' => $returnurl)),
+                    'icon' => $icon,
                 ];
             }
-            if ($i != count($chapters)) {
-                $data['actions'][] = [
-                    'label' => get_string('movedown', 'mod_book'),
-                    'url' => new moodle_url('move.php', array('id' => $cm->id, 'chapterid' => $ch->id, 'up' => '0', 'sesskey' => $USER->sesskey, 'returnurl' => $returnurl)),
-                    'icon' => $OUTPUT->pix_icon('t/down', ''),
-                ];
+
+            if ($data['actions']) {
+                $dropdown = $OUTPUT->render_from_template('mod_book/dropdown', $data);
+                echo '<div class="float-end d-print-none">' . $dropdown . '</div>';
             }
-            $data['actions'][] = [
-                'divider' => true,
-            ];
-
-            $data['actions'][] = [
-                'label' => get_string('edit'),
-                'url' => new moodle_url('edit.php', array('cmid' => $cm->id, 'id' => $chapter->id, 'returnurl' => $returnurl)),
-                'icon' => $OUTPUT->pix_icon('t/edit', get_string('editchapter', 'mod_book', $chaptertitle)),
-            ];
-
-            $deleteaction = new confirm_action(get_string('deletechapter', 'mod_book', $chaptertitle));
-            $action = $OUTPUT->action_link(
-                new moodle_url('delete.php', [
-                    'id'        => $cm->id,
-                    'chapterid' => $chapter->id,
-                    'sesskey'   => sesskey(),
-                    'confirm'   => 1,
-                ]),
-                get_string('delete'),
-                $deleteaction,
-                ['class' => 'dropdown-item text-danger'],
-                new pix_icon('t/delete', get_string('deletechapter', 'mod_book', $chaptertitle))
-            );
-            $data['actions'][] = [
-                'customhtml' => $action,
-            ];
-
-            if ($chapter->hidden) {
-                $label = get_string('show');
-                $icon = $OUTPUT->pix_icon('t/show', get_string('showchapter', 'mod_book', $chaptertitle));
-            } else {
-                $label = get_string('hide');
-                $icon = $OUTPUT->pix_icon('t/hide', get_string('hidechapter', 'mod_book', $chaptertitle));
-            }
-            $data['actions'][] = [
-                'label' => $label,
-                'url' => new moodle_url('show.php', array('id' => $cm->id, 'chapterid' => $chapter->id, 'sesskey' => $USER->sesskey, 'returnurl' => $returnurl)),
-                'icon' => $icon,
-            ];
-            $dropdown = $OUTPUT->render_from_template('mod_book/dropdown', $data);
-            echo '<div class="float-end d-print-none">' . $dropdown . '</div>';
 
             if ($chapter->hidden) {
                 echo '<div class="dimmed_text">';
@@ -296,20 +301,22 @@ if (!$chapter) {
         'actions' => [],
     ];
 
-        $chaptertitle = format_string($chapter->title);
-        $data['actions'][] = [
-            'label' => get_string('edit'),
-            'url' => new moodle_url('edit.php', array('cmid' => $cm->id, 'id' => $chapter->id)),
-            'icon' => $OUTPUT->pix_icon('t/edit', get_string('editchapter', 'mod_book', $chaptertitle)),
-        ];
+    $chaptertitle = format_string($chapter->title);
 
+    $button = '';
+    if ($edit) {
+        $url = new moodle_url('edit.php', array('cmid' => $cm->id, 'id' => $chapter->id));
+        $button = $OUTPUT->single_button($url, get_string('edit'), 'get');
+    }
+
+    if ($edit) {
         $deleteaction = new confirm_action(get_string('deletechapter', 'mod_book', $chaptertitle));
         $action = $OUTPUT->action_link(
             new moodle_url('delete.php', [
-                'id'        => $cm->id,
+                'id' => $cm->id,
                 'chapterid' => $chapter->id,
-                'sesskey'   => sesskey(),
-                'confirm'   => 1,
+                'sesskey' => sesskey(),
+                'confirm' => 1,
             ]),
             get_string('delete'),
             $deleteaction,
@@ -339,6 +346,7 @@ if (!$chapter) {
             'url' => new moodle_url('edit.php', array('cmid' => $cm->id, 'pagenum' => $chapter->pagenum, 'subchapter' => $chapter->subchapter)),
             'icon' => $OUTPUT->pix_icon('add', $buttontitle, 'mod_book'),
         ];
+    }
 
 
     $hook = new \mod_book\hook\fetch_chapter_actions($chapter, $book, $context, $cm);
@@ -355,7 +363,7 @@ if (!$chapter) {
 
     if ($data['actions']) {
         $dropdown = $OUTPUT->render_from_template('mod_book/dropdown', $data);
-        echo '<div class="float-end d-print-none">' . $dropdown . '</div>';
+        echo '<div class="float-end d-print-none">' . $button . $dropdown . '</div>';
     }
 
     if (!$book->customtitles) {
