@@ -310,6 +310,7 @@ if (!$chapter) {
     echo '<div class="book_toc_chapter position-sticky d-print-none" style="top:5rem">';
     echo '<h2 class="h4">' . format_string($book->name). '</h2>';
     echo book_get_chanpter($chapters, $chapter, $book, $cm);
+
     echo '</div>';
     echo '</div>';
 
@@ -427,12 +428,13 @@ $chaptertitle = format_string($chapter->title);
     $prevchapter = $actionmenu->get_previous_chapter();
     $nextcahpter = $actionmenu->get_next_chapter();
 
-    echo '<nav class="bg-light my-4 p-3 d-flex justify-content-between d-print-none">';
+    if ($prevchapter || $nextcahpter) {
+        echo '<nav class="bg-light my-4 p-3 d-flex justify-content-between d-print-none">';
 
-    if ($prevchapter) {
-        $strprev = get_string('navprev', 'mod_book');
-        $prevurl = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $prevchapter->id]);
-        $nav = <<<EOF
+        if ($prevchapter) {
+            $strprev = get_string('navprev', 'mod_book');
+            $prevurl = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $prevchapter->id]);
+            $nav = <<<EOF
         <div class="mr-1">
           <div>
           <a href="$prevurl">
@@ -446,14 +448,14 @@ $chaptertitle = format_string($chapter->title);
         </div>
 EOF;
 
-        echo $nav;
-    } else {
-        echo '<div class="text-right ml-1"></div>';
-    }
-    if ($nextcahpter) {
-        $strnext = get_string('navnext', 'mod_book');
-        $nexturl = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $nextcahpter->id]);
-        $nav = <<<EOF
+            echo $nav;
+        } else {
+            echo '<div class="text-right ml-1"></div>';
+        }
+        if ($nextcahpter) {
+            $strnext = get_string('navnext', 'mod_book');
+            $nexturl = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => $nextcahpter->id]);
+            $nav = <<<EOF
         <div class="text-right ml-1">
 
           <div class="text-right">
@@ -465,10 +467,11 @@ EOF;
         </div>
 EOF;
 
-        echo $nav;
-    }
+            echo $nav;
+        }
 
-    echo '</nav>';
+        echo '</nav>';
+    }
 
     echo '</div>';
     echo '</div>';
