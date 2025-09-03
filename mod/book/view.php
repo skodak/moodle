@@ -313,8 +313,8 @@ if (!$chapter) {
         $url = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => 0]);
         echo $OUTPUT->single_button($url, 'Edit book structure', 'get'); // TODO: localise
     } else {
-        $url = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => 0]);
-        echo $OUTPUT->single_button($url, get_string('viewallchapters', 'mod_book'), 'get');
+//        $url = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => 0]);
+//        echo $OUTPUT->single_button($url, get_string('viewallchapters', 'mod_book'), 'get');
     }
     echo '</div>';
     echo '</div>';
@@ -326,7 +326,17 @@ if (!$chapter) {
         'actions' => [],
     ];
 
-    $chaptertitle = format_string($chapter->title);
+$data['actions'][] = [
+    'label' => get_string('viewallchapters', 'mod_book'),
+    'url' => new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'chapterid' => 0]),
+    'icon' => $OUTPUT->pix_icon('icon', '', 'mod_book'),
+];
+
+$data['actions'][] = [
+    'customhtml' => '<a href="#" class="dropdown-item" onclick="window.print();">' . $OUTPUT->pix_icon('e/print', '') . 'Print chapter</a>',
+];
+
+$chaptertitle = format_string($chapter->title);
 
     $button = '';
     if ($allowedit) {
