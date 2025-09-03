@@ -174,7 +174,17 @@ if (!$chapter) {
 
             $chaptertitle = format_string($chapter->title);
 
+            $data['actions'][] = [
+                'label' => get_string('viewchapter', 'mod_book'),
+                'url' => new moodle_url('view.php', array('id' => $cm->id, 'chapterid' => $ch->id)),
+                'icon' => $OUTPUT->pix_icon('e/file-text', ''),
+            ];
+
             if ($edit) {
+                $data['actions'][] = [
+                    'divider' => true,
+                ];
+
                 if ($i != 1) {
                     $data['actions'][] = [
                         'label' => get_string('moveup', 'mod_book'),

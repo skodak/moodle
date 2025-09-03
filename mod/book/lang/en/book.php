@@ -118,6 +118,7 @@ $string['tagarea_book_chapters'] = 'Book chapters';
 
 $string['viewallchapters'] = 'View all chapters';
 $string['viewtoconly']= 'View table of contents only';
+$string['viewchapter']= 'View chapter';
 
 // Deprecated since Moodle 4.4.
 $string['navimages'] = 'Images';
