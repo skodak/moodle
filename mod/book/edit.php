@@ -30,6 +30,7 @@ $cmid       = required_param('cmid', PARAM_INT);  // Book Course Module ID
 $chapterid  = optional_param('id', 0, PARAM_INT); // Chapter ID
 $pagenum    = optional_param('pagenum', 0, PARAM_INT);
 $subchapter = optional_param('subchapter', 0, PARAM_BOOL);
+$returnurl = optional_param('returnurl', '', PARAM_LOCALURL);
 
 $cm = get_coursemodule_from_id('book', $cmid, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
@@ -66,6 +67,7 @@ if ($prevpage) {
 
 $options = array('noclean'=>true, 'subdirs'=>true, 'maxfiles'=>-1, 'maxbytes'=>0, 'context'=>$context);
 $chapter = file_prepare_standard_editor($chapter, 'content', $options, $context, 'mod_book', 'chapter', $chapter->id);
+$chapter->returnurl = $returnurl;
 
 $mform = new book_chapter_edit_form(null, array('chapter'=>$chapter, 'options'=>$options));
 
@@ -76,6 +78,10 @@ if ($mform->is_cancelled()) {
     if (!$chapters) {
         $section = $DB->get_record('course_sections', ['id' => $cm->section]);
         redirect(course_get_url($course, $section)); // Back to course view.
+    }
+
+    if ($returnurl) {
+        redirect(new moodle_url($returnurl));
     }
 
     if (empty($chapter->id)) {
@@ -127,6 +133,11 @@ if ($mform->is_cancelled()) {
     }
 
     book_preload_chapters($book); // fix structure
+
+    if ($returnurl) {
+        redirect(new moodle_url($returnurl));
+    }
+
     redirect("view.php?id=$cm->id&chapterid=$data->id");
 }
 
