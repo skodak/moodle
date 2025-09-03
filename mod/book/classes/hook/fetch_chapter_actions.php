@@ -38,7 +38,7 @@ class fetch_chapter_actions {
     /** @var stdClass  */
     public $cm;
     /** @var array action menu items */
-    protected $actions;
+    protected $actions = [];
 
     public function __construct(stdClass $chapter, stdClass $book, \context_module $context, stdClass $cm) {
         $this->chapter = $chapter;

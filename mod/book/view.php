@@ -214,14 +214,11 @@ if (!$chapter) {
 
     echo '<div class="col-9">';
 
-    $dropdown = '';
-
+    $data = [
+        'title' => 'Actions', // TODO: localise
+        'actions' => [],
+    ];
     if ($edit) {
-        $data = [
-            'title' => 'Actions', // TODO: localise
-            'actions' => [],
-        ];
-
         $chaptertitle = format_string($chapter->title);
 
         $data['actions'][] = [
@@ -266,12 +263,22 @@ if (!$chapter) {
             'url' => new moodle_url('edit.php', array('cmid' => $cm->id, 'pagenum' => $chapter->pagenum, 'subchapter' => $chapter->subchapter)),
             'icon' => $OUTPUT->pix_icon('add', $buttontitle, 'mod_book'),
         ];
-
-        $dropdown = $OUTPUT->render_from_template('mod_book/dropdown', $data);
     }
 
+    $hook = new \mod_book\hook\fetch_chapter_actions($chapter, $book, $context, $cm);
+    \core\di::get(\core\hook\manager::class)->dispatch($hook);
+    $actions = $hook->get_actions();
+    if ($actions) {
+        foreach ($actions as $action) {
+            if ($action['icon']) {
+                $action['icon'] = $OUTPUT->render($action['icon']);
+            }
+            $data['actions'][] = $action;
+        }
+    }
 
-    if ($dropdown !== '') {
+    if ($data['actions']) {
+        $dropdown = $OUTPUT->render_from_template('mod_book/dropdown', $data);
         echo '<div class="float-end d-print-none">' . $dropdown . '</div>';
     }
 
