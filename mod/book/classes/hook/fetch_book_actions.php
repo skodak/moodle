@@ -44,8 +44,8 @@ class fetch_book_actions {
         $this->cm = $cm;
     }
 
-    public function add_item(string $name, moodle_url $url, ?\pix_icon $icon = null): void {
-        $this->actions[] = ['name' => $name, 'url' => $url, 'icon' => $icon];
+    public function add_item(string $label, moodle_url $url, ?\pix_icon $icon = null): void {
+        $this->actions[] = ['label' => $label, 'url' => $url, 'icon' => $icon];
     }
 
     public function get_actions(): array {
