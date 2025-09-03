@@ -90,6 +90,14 @@ if ($chapterid && $chapter = $DB->get_record('book_chapters', ['id' => $chapteri
 $PAGE->set_other_editing_capability('mod/book:edit');
 $PAGE->set_title($pagetitle);
 $PAGE->set_heading($course->fullname);
+
+if (!$chapters) {
+    echo $OUTPUT->header();
+    echo $OUTPUT->notification(get_string('nocontent', 'mod_book'), 'info', false);
+    echo $OUTPUT->footer();
+    die;
+}
+
 $PAGE->activityheader->disable();
 
 // No content in the book.
@@ -97,7 +105,30 @@ if (!$chapter) {
     $PAGE->add_body_class('limitedwidth');
     $PAGE->add_body_class('mod_book_view_all');
     //$PAGE->set_pagelayout('embedded');
-    $PAGE->set_url('/mod/book/view.php', array('id' => $id));
+    $PAGE->set_url('/mod/book/view.php', array('id' => $id, 'viewall' => $viewall));
+
+    if ($viewall) {
+        $url = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'viewall' => 0]);
+        $button = $OUTPUT->single_button($url, get_string('viewtoconly', 'mod_book'), 'get');
+    } else {
+        $url = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'viewall' => 1]);
+        $button = $OUTPUT->single_button($url, get_string('viewallchapters', 'mod_book'), 'get');
+    }
+
+    $hook = new \mod_book\hook\fetch_book_actions($book, $context, $cm);
+    \core\di::get(\core\hook\manager::class)->dispatch($hook);
+    $actions = $hook->get_actions();
+    if ($actions) {
+        $dropdown = new \tool_mulib\output\dropdown('Actions'); // TODO: localise
+        foreach ($actions as $action) {
+            $dropdown->add_item($action['name'], $action['url']);
+        }
+        $PAGE->add_header_action($button.$OUTPUT->render($dropdown));
+    } else {
+        $PAGE->add_header_action($button);
+    }
+
+
     echo $OUTPUT->header();
 
     $courseurl = new moodle_url('/course/view.php', ['id' => $course->id]);
@@ -120,41 +151,31 @@ if (!$chapter) {
         echo '</div>';
     }
 
-    if (!$chapters) {
-        echo $OUTPUT->notification(get_string('nocontent', 'mod_book'), 'info', false);
-    } else {
-        if ($viewall) {
-            $url = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'viewall' => 0]);
-            echo '<div class="viewtoconly float-end d-print-none">' . html_writer::link($url, get_string('viewtoconly', 'mod_book')) . '</div><br />';
-
-            echo '<article class="mod_book_chapters">';
-            foreach ($chapters as $ch) {
-                if ($ch->hidden and !$viewhidden) {
-                    continue;
-                }
-                $chapter = $DB->get_record('book_chapters', ['id' => $ch->id]);
-                $chid = 'mod_book_chanpter_' . $chapter->id;
-                if ($book->customtitles) {
-                    echo '<div id="'. $chid . '" />';
+    if ($viewall) {
+        echo '<article class="mod_book_chapters">';
+        foreach ($chapters as $ch) {
+            if ($ch->hidden and !$viewhidden) {
+                continue;
+            }
+            $chapter = $DB->get_record('book_chapters', ['id' => $ch->id]);
+            $chid = 'mod_book_chanpter_' . $chapter->id;
+            if ($book->customtitles) {
+                echo '<div id="'. $chid . '" />';
+            } else {
+                if (!$chapter->subchapter) {
+                    $currtitle = book_get_chapter_title($chapter->id, $chapters, $book, $context);
+                    echo $OUTPUT->heading($currtitle, 2, 'h3', $chid);
                 } else {
-                    if (!$chapter->subchapter) {
-                        $currtitle = book_get_chapter_title($chapter->id, $chapters, $book, $context);
-                        echo $OUTPUT->heading($currtitle, 2, 'h3', $chid);
-                    } else {
-                        $currsubtitle = book_get_chapter_title($chapter->id, $chapters, $book, $context);
-                        echo $OUTPUT->heading($currsubtitle, 3, 'h4', $chid);
-                    }
+                    $currsubtitle = book_get_chapter_title($chapter->id, $chapters, $book, $context);
+                    echo $OUTPUT->heading($currsubtitle, 3, 'h4', $chid);
                 }
-
-                $chaptertext = file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book', 'chapter', $chapter->id);
-                echo format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => false, 'context' => $context]);
             }
 
-            echo '</article>';
-        } else {
-            $url = new moodle_url('/mod/book/view.php', ['id' => $cm->id, 'viewall' => 1]);
-            echo '<div class="float-end d-print-none">' . html_writer::link($url, get_string('viewallchapters', 'mod_book')) . '</div>';
+            $chaptertext = file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book', 'chapter', $chapter->id);
+            echo format_text($chaptertext, $chapter->contentformat, ['noclean' => true, 'overflowdiv' => false, 'context' => $context]);
         }
+
+        echo '</article>';
     }
 
     echo $OUTPUT->footer();
@@ -191,7 +212,6 @@ if (!$chapter) {
     $buttons = '';
 
     if ($edit) {
-
         $chaptertitle = format_string($chapter->title);
         $buttons .= html_writer::link(new moodle_url('edit.php', array('cmid' => $cm->id, 'id' => $chapter->id)),
             $OUTPUT->pix_icon('t/edit', get_string('editchapter', 'mod_book', $chaptertitle)),

@@ -27,6 +27,7 @@ require_once(__DIR__.'/locallib.php');
 
 $id        = required_param('id', PARAM_INT);        // Course Module ID
 $chapterid = required_param('chapterid', PARAM_INT); // Chapter ID
+$returnurl = optional_param('returnurl', '', PARAM_LOCALURL);
 
 $cm = get_coursemodule_from_id('book', $id, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
@@ -72,5 +73,8 @@ if (!$chapter->subchapter) {
 book_preload_chapters($book); // fix structure
 $DB->set_field('book', 'revision', $book->revision+1, array('id'=>$book->id));
 
+if ($returnurl) {
+    redirect(new moodle_url($returnurl));
+}
 redirect('view.php?id='.$cm->id.'&chapterid='.$chapter->id);
 

@@ -28,3 +28,7 @@ $plugin->component = 'mod_book'; // Full name of the plugin (used for diagnostic
 $plugin->version   = 2024100700; // The current module version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024100100; // Requires this Moodle version.
 $plugin->cron      = 0;          // Period for cron to check this module (secs)
+
+$plugin->dependencies = [
+    'tool_mulib' => 2025080945,
+];

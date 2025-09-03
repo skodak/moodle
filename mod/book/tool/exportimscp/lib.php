@@ -31,6 +31,9 @@ defined('MOODLE_INTERNAL') || die;
  * @param navigation_node $node The node to add module settings to
  */
 function booktool_exportimscp_extend_settings_navigation(settings_navigation $settings, navigation_node $node) {
+
+    return; // TODO: delete me
+
     if (has_capability('booktool/exportimscp:export', $settings->get_page()->cm->context)) {
         $url = new moodle_url('/mod/book/tool/exportimscp/index.php', array('id' => $settings->get_page()->cm->id));
         $icon = new pix_icon('generate', '', 'booktool_exportimscp', array('class'=>'icon'));
