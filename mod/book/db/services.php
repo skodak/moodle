@@ -45,5 +45,15 @@ $functions = array(
         'type'          => 'read',
         'capabilities'  => '',
         'services'      => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
+    ),
+
+    'mod_book_reorder_chapters' => array(
+        'classname'     => 'mod_book_external',
+        'methodname'    => 'reorder_chapters',
+        'description'   => 'Reorder book chapters via drag and drop',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'mod/book:edit',
+        'services'      => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
     )
 );

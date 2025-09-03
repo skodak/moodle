@@ -211,18 +211,24 @@ function book_get_main_toc($chapters, $chapter, $book, $cm, $edit, $viewall) {
     $context = context_module::instance($cm->id);
     $viewhidden = has_capability('mod/book:viewhiddenchapters', $context);
 
+    // Add editing class if in edit mode for drag and drop
+    $tocclasses = 'book_toc clearfix';
+    if ($edit) {
+        $tocclasses .= ' editing';
+    }
+
     switch ($book->numbering) {
         case BOOK_NUM_NONE:
-            $toc .= html_writer::start_tag('div', array('class' => 'book_toc book_toc_none clearfix'));
+            $toc .= html_writer::start_tag('div', array('class' => $tocclasses . ' book_toc_none'));
             break;
         case BOOK_NUM_NUMBERS:
-            $toc .= html_writer::start_tag('div', array('class' => 'book_toc book_toc_numbered clearfix'));
+            $toc .= html_writer::start_tag('div', array('class' => $tocclasses . ' book_toc_numbered'));
             break;
         case BOOK_NUM_BULLETS:
-            $toc .= html_writer::start_tag('div', array('class' => 'book_toc book_toc_bullets clearfix'));
+            $toc .= html_writer::start_tag('div', array('class' => $tocclasses . ' book_toc_bullets'));
             break;
         case BOOK_NUM_INDENTED:
-            $toc .= html_writer::start_tag('div', array('class' => 'book_toc book_toc_indented clearfix'));
+            $toc .= html_writer::start_tag('div', array('class' => $tocclasses . ' book_toc_indented'));
             break;
     }
 
@@ -285,6 +291,14 @@ function book_get_main_toc($chapters, $chapter, $book, $cm, $edit, $viewall) {
                     $titleout = html_writer::tag('span', $title, array('class' => 'dimmed_text'));
                 }
             }
+            // Add wrapper div with data attributes for drag and drop
+            $chapterattrs = array(
+                'class' => 'book-chapter-item',
+                'data-chapterid' => $ch->id,
+                'data-subchapter' => $ch->subchapter ? 1 : 0,
+                'data-pagenum' => $ch->pagenum
+            );
+            $toc .= html_writer::start_tag('div', $chapterattrs);
             $toc .= html_writer::start_tag('div', array('class' => 'd-flex'));
             if ($chapter&& $ch->id == $chapter->id) {
                 $toc .= html_writer::tag('strong', $titleout, array('class' => 'text-truncate'));
@@ -347,6 +361,7 @@ function book_get_main_toc($chapters, $chapter, $book, $cm, $edit, $viewall) {
                                             $OUTPUT->pix_icon('add', $buttontitle, 'mod_book'), array('title' => $buttontitle));
             $toc .= html_writer::end_tag('div');
             $toc .= html_writer::end_tag('div');
+            $toc .= html_writer::end_tag('div'); // Close book-chapter-item div
 
             if (!$ch->subchapter) {
                 $toc .= html_writer::start_tag('ul');

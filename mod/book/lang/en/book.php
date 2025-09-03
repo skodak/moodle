@@ -69,6 +69,7 @@ $string['movechapterup'] = 'Move chapter up "{$a}"';
 $string['moveup'] = 'Move up';
 $string['movedown'] = 'Move down';
 $string['movechapterdown'] = 'Move chapter down "{$a}"';
+$string['chapterreordered'] = 'Chapter successfully reordered';
 $string['privacy:metadata'] = 'The book activity module does not store any personal data.';
 $string['search:activity'] = 'Book - resource information';
 $string['search:chapter'] = 'Book - chapters';
@@ -119,6 +120,14 @@ $string['tagarea_book_chapters'] = 'Book chapters';
 $string['viewallchapters'] = 'View all chapters';
 $string['viewtoconly']= 'View table of contents only';
 $string['viewchapter']= 'View chapter';
+
+// Drag and drop strings
+$string['chapterreordering'] = 'Drag to reorder chapter';
+$string['dropchapterhere'] = 'Drop chapter here';
+$string['dropassubchapter'] = 'Drop here to make subchapter';
+$string['movemode'] = 'Move mode - select destination';
+$string['selectdestination'] = 'Click to select destination';
+$string['cancelmove'] = 'Cancel move';
 
 // Deprecated since Moodle 4.4.
 $string['navimages'] = 'Images';

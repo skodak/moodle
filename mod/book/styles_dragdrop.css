@@ -1,0 +1,259 @@
+/* Drag and drop styles for book chapters */
+
+/* Drag handle styles */
+.book-drag-handle {
+    cursor: move;
+    cursor: grab;
+    padding: 5px 10px;
+    margin-right: 10px;
+    color: #666;
+    font-size: 16px;
+    user-select: none;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.book-drag-handle:hover {
+    color: #333;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+.book-drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Chapter item styles */
+.book-chapter-item {
+    position: relative;
+    padding: 8px 12px;
+    margin: 2px 0;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.book-chapter-item.book-draggable {
+    user-select: none;
+}
+
+.book-chapter-item.dragging {
+    opacity: 0.4;
+    background-color: #f0f0f0;
+    transform: scale(0.95);
+}
+
+.book-chapter-item.drag-over {
+    border-color: #007bff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+}
+
+/* Drop zone styles */
+.book-drop-zone {
+    display: none;
+    min-height: 40px;
+    margin: 5px 0;
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    background-color: rgba(0, 123, 255, 0.05);
+    text-align: center;
+    line-height: 36px;
+    color: #999;
+    font-style: italic;
+    transition: all 0.3s ease;
+}
+
+.book-drop-zone.visible {
+    display: block;
+}
+
+.book-drop-zone.drag-over {
+    border-color: #28a745;
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Subchapter drop zone specific styles */
+.book-drop-zone-subchapter {
+    margin-left: 30px;
+    background-color: rgba(255, 193, 7, 0.05);
+    border-color: #ffc107;
+}
+
+.book-drop-zone-subchapter.drag-over {
+    border-color: #ff9800;
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #ff9800;
+}
+
+/* Subchapter visual indication */
+.book_toc ul ul .book-chapter-item {
+    margin-left: 20px;
+}
+
+.book_toc ul ul .book-chapter-item::before {
+    content: "└";
+    position: absolute;
+    left: -15px;
+    color: #999;
+}
+
+/* Edit mode specific styles */
+.book_toc.editing .book-chapter-item {
+    padding-left: 45px;
+}
+
+.book_toc.editing .book-drag-handle {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .book-drag-handle {
+        font-size: 20px;
+        padding: 8px;
+    }
+    
+    .book-drop-zone {
+        min-height: 50px;
+        line-height: 46px;
+    }
+    
+    .book-drop-zone-subchapter {
+        margin-left: 15px;
+    }
+}
+
+/* Animation for successful drop */
+@keyframes dropSuccess {
+    0% {
+        background-color: rgba(40, 167, 69, 0.3);
+        transform: scale(1.05);
+    }
+    100% {
+        background-color: transparent;
+        transform: scale(1);
+    }
+}
+
+.book-chapter-item.drop-success {
+    animation: dropSuccess 0.5s ease-out;
+}
+
+/* Disabled state for items that cannot be moved */
+.book-chapter-item.drag-disabled {
+    opacity: 0.6;
+}
+
+.book-chapter-item.drag-disabled .book-drag-handle {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+/* Visual feedback for touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .book-drag-handle {
+        font-size: 24px;
+        padding: 12px;
+    }
+    
+    .book-chapter-item {
+        padding: 12px 16px;
+    }
+}
+
+/* Move mode styles */
+.book-move-btn {
+    padding: 5px;
+    color: #6c757d;
+    transition: color 0.2s;
+}
+
+.book-move-btn:hover {
+    color: #333;
+    text-decoration: none;
+}
+
+.book_toc.move-mode-active {
+    position: relative;
+    padding-top: 50px;
+}
+
+#book-move-cancel {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1001;
+}
+
+.book-chapter-item.move-mode-selected {
+    background-color: #fff3cd;
+    border: 2px solid #ffc107;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
+}
+
+.book-drop-zone.move-mode-visible {
+    display: block;
+    min-height: 40px;
+    border: 2px dashed #28a745;
+    background-color: #d4edda;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.book-drop-zone.move-mode-visible:hover {
+    background-color: #c3e6cb;
+    border-color: #1e7e34;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+}
+
+.book-drop-zone.move-mode-visible .drop-message {
+    display: block;
+    text-align: center;
+    color: #155724;
+    font-weight: 500;
+    padding: 10px;
+}
+
+/* Enhanced drag handle styling */
+.book-drag-handle {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 6px 8px !important;
+    margin-right: 12px !important;
+    transition: all 0.2s;
+    cursor: move;
+    cursor: grab;
+    display: inline-flex !important;
+    align-items: center;
+}
+
+.book-drag-handle:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+    color: #212529 !important;
+    transform: scale(1.1);
+}
+
+.book-drag-handle:active {
+    cursor: grabbing;
+    background-color: #dee2e6;
+}
+
+/* Visual feedback when in move mode */
+.book-drag-handle.active-move {
+    background-color: #ffc107;
+    border-color: #ff9800;
+    color: #000 !important;
+}
+
+/* Ensure drag handle is always visible */
+.book-chapter-item .d-flex {
+    align-items: center;
+}

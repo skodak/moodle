@@ -243,4 +243,187 @@ class mod_book_external extends external_api {
             )
         );
     }
+
+    /**
+     * Returns description of reorder_chapters parameters
+     *
+     * @return external_function_parameters
+     */
+    public static function reorder_chapters_parameters() {
+        return new external_function_parameters(
+            array(
+                'cmid' => new external_value(PARAM_INT, 'Course module ID'),
+                'chapterId' => new external_value(PARAM_INT, 'Chapter ID being moved'),
+                'targetPosition' => new external_value(PARAM_TEXT, 'Target position: before, after, subchapter, end'),
+                'targetChapterId' => new external_value(PARAM_INT, 'Target chapter ID', VALUE_DEFAULT, 0),
+                'parentId' => new external_value(PARAM_INT, 'Parent chapter ID if becoming subchapter', VALUE_DEFAULT, 0)
+            )
+        );
+    }
+
+    /**
+     * Reorder book chapters via drag and drop
+     *
+     * @param int $cmid Course module ID
+     * @param int $chapterid Chapter being moved
+     * @param string $targetposition Target position
+     * @param int $targetchapterid Target chapter ID
+     * @param int $parentid Parent ID if becoming subchapter
+     * @return array success status and message
+     */
+    public static function reorder_chapters($cmid, $chapterid, $targetposition, $targetchapterid = 0, $parentid = 0) {
+        global $DB;
+
+        $params = self::validate_parameters(self::reorder_chapters_parameters(), array(
+            'cmid' => $cmid,
+            'chapterId' => $chapterid,
+            'targetPosition' => $targetposition,
+            'targetChapterId' => $targetchapterid,
+            'parentId' => $parentid
+        ));
+
+        // Get course module and book
+        $cm = get_coursemodule_from_id('book', $params['cmid'], 0, false, MUST_EXIST);
+        $book = $DB->get_record('book', array('id' => $cm->instance), '*', MUST_EXIST);
+        $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+
+        // Check permissions
+        $context = context_module::instance($cm->id);
+        self::validate_context($context);
+        require_capability('mod/book:edit', $context);
+
+        // Get the chapter being moved
+        $chapter = $DB->get_record('book_chapters', array('id' => $params['chapterId'], 'bookid' => $book->id), '*', MUST_EXIST);
+        
+        // Get all chapters in current order
+        $chapters = $DB->get_records('book_chapters', array('bookid' => $book->id), 'pagenum', 'id, pagenum, subchapter');
+        
+        // Reorganize chapters array to be sequential
+        $oldchapters = array();
+        $i = 1;
+        foreach ($chapters as $ch) {
+            $oldchapters[$i] = $ch;
+            $i++;
+        }
+
+        // Find the position of the chapter being moved
+        $sourcepos = 0;
+        foreach ($oldchapters as $pos => $ch) {
+            if ($ch->id == $chapter->id) {
+                $sourcepos = $pos;
+                break;
+            }
+        }
+
+        // Calculate new position based on target
+        $targetpos = 0;
+        if ($params['targetPosition'] == 'end') {
+            $targetpos = count($oldchapters);
+        } else if ($params['targetChapterId']) {
+            foreach ($oldchapters as $pos => $ch) {
+                if ($ch->id == $params['targetChapterId']) {
+                    if ($params['targetPosition'] == 'before') {
+                        $targetpos = $pos - 1;
+                    } else if ($params['targetPosition'] == 'after' || $params['targetPosition'] == 'subchapter') {
+                        $targetpos = $pos;
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Create new ordered array
+        $newchapters = array();
+        $newpos = 1;
+        
+        // Build the new order
+        foreach ($oldchapters as $pos => $ch) {
+            if ($pos == $sourcepos) {
+                continue; // Skip the moved chapter for now
+            }
+            
+            // Insert before current position if this is the target
+            if ($newpos - 1 == $targetpos && $sourcepos > $pos) {
+                $movedchapter = clone $chapter;
+                $movedchapter->pagenum = $newpos;
+                
+                // Handle subchapter conversion
+                if ($params['targetPosition'] == 'subchapter' && $params['parentId']) {
+                    $movedchapter->subchapter = 1;
+                } else if ($params['targetPosition'] == 'before' || $params['targetPosition'] == 'after') {
+                    // Keep original subchapter status unless explicitly moving to become subchapter
+                    $movedchapter->subchapter = $chapter->subchapter;
+                }
+                
+                $newchapters[$newpos] = $movedchapter;
+                $newpos++;
+            }
+            
+            $ch->pagenum = $newpos;
+            $newchapters[$newpos] = $ch;
+            $newpos++;
+            
+            // Insert after current position if this is the target
+            if ($newpos - 1 == $targetpos && $sourcepos < $pos) {
+                $movedchapter = clone $chapter;
+                $movedchapter->pagenum = $newpos;
+                
+                // Handle subchapter conversion
+                if ($params['targetPosition'] == 'subchapter' && $params['parentId']) {
+                    $movedchapter->subchapter = 1;
+                } else {
+                    $movedchapter->subchapter = $chapter->subchapter;
+                }
+                
+                $newchapters[$newpos] = $movedchapter;
+                $newpos++;
+            }
+        }
+        
+        // If we haven't inserted the moved chapter yet, add it at the end
+        if ($targetpos >= count($oldchapters)) {
+            $movedchapter = clone $chapter;
+            $movedchapter->pagenum = $newpos;
+            $movedchapter->subchapter = $chapter->subchapter;
+            $newchapters[$newpos] = $movedchapter;
+        }
+
+        // Update the database with new positions
+        foreach ($newchapters as $pos => $ch) {
+            if ($ch->id == $chapter->id) {
+                // Update the moved chapter
+                $DB->set_field('book_chapters', 'pagenum', $ch->pagenum, array('id' => $ch->id));
+                $DB->set_field('book_chapters', 'subchapter', $ch->subchapter, array('id' => $ch->id));
+            } else {
+                // Update other chapters' positions
+                $DB->set_field('book_chapters', 'pagenum', $ch->pagenum, array('id' => $ch->id));
+            }
+        }
+
+        // Update book revision
+        $DB->set_field('book', 'revision', $book->revision + 1, array('id' => $book->id));
+
+        // Trigger event
+        $updatedchapter = $DB->get_record('book_chapters', array('id' => $chapter->id));
+        \mod_book\event\chapter_updated::create_from_chapter($book, $context, $updatedchapter)->trigger();
+
+        return array(
+            'success' => true,
+            'message' => get_string('chapterreordered', 'mod_book')
+        );
+    }
+
+    /**
+     * Returns description of reorder_chapters result
+     *
+     * @return external_single_structure
+     */
+    public static function reorder_chapters_returns() {
+        return new external_single_structure(
+            array(
+                'success' => new external_value(PARAM_BOOL, 'Whether the operation was successful'),
+                'message' => new external_value(PARAM_TEXT, 'Status message')
+            )
+        );
+    }
 }
