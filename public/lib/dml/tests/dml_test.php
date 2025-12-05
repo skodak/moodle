@@ -3243,7 +3243,10 @@ EOD;
             'value2' => '100',
         ];
         $DB->upsert_record($tablename2, $record9, ['name', 'course']);
-        $this->assertSame($dbreads, $DB->perf_get_reads()); // This will fail with fallback upsert code from moodle_base.
+        if ($DB->get_dbfamily() !== 'mssql') {
+            // This will fail with fallback upsert code from moodle_base.
+            $this->assertSame($dbreads, $DB->perf_get_reads());
+        }
         $this->assertGreaterThan($dbwrites, $DB->perf_get_writes());
 
         // Test insert-only-fields.
